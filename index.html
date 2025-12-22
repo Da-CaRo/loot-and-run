@@ -406,23 +406,27 @@
             progressContainer.classList.remove('hidden');
             roundText.textContent = `${rondaActual}/${MAX_RONDAS}`;
 
+            // Mostrar el acumulado total del suelo en algún lugar de la cueva
+            const pathTitle = document.querySelector('#cave-path').previousElementSibling;
+            pathTitle.innerHTML = `Camino de la Expedición <span class="ml-4 text-yellow-400">| Total en suelo: 💎${gemasEnSuelo}</span>`;
+
             // Aquí actualizaremos los cuadros de los jugadores (Status)
             const statusContainer = document.getElementById('players-status');
             statusContainer.innerHTML = '';
 
             listaJugadores.forEach(p => {
                 const card = document.createElement('div');
-                card.className = `p-3 rounded-lg border ${p.estado === 'explorando' ? 'bg-gray-800 border-gray-600' : 'bg-gray-900 border-red-900 opacity-50'}`;
+                card.className = `p-3 rounded-lg border ${p.estado === 'explorando' ? 'bg-gray-800 border-gray-600' : 'bg-gray-900 border-red-900 opacity-50'} `;
                 card.innerHTML = `
-            <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between">
                 <span style="color: ${p.color}" class="font-bold">${p.nombre}</span>
                 <span class="text-xs text-gray-500">${p.estado.toUpperCase()}</span>
-            </div>
-            <div class="flex justify-between mt-2">
-                <span class="text-xs">Mano: 💎${p.gemasEnMano}</span>
-                <span class="text-xs font-bold text-acento">Baúl: 💎${p.baul}</span>
-            </div>
-        `;
+            </div >
+                <div class="flex justify-between mt-2">
+                    <span class="text-xs">Mano: 💎${p.gemasEnMano}</span>
+                    <span class="text-xs font-bold text-acento">Baúl: 💎${p.baul}</span>
+                </div>
+            `;
                 statusContainer.appendChild(card);
             });
         }
@@ -450,20 +454,35 @@
         cargarNombresRecientes();
 
         // --- VARIABLES DE CARTAS Y MAZO ---
-        const CARTAS_TESORO = [1, 2, 3, 4, 5, 5, 7, 7, 9, 11, 13, 14, 15, 17];
-        const TIPOS_PELIGRO = ['Trampa', 'Serpiente', 'Lava', 'Araña', 'Rocas'];
+        const CARTAS_TESORO = [1, 2, 3, 4, 5, 5, 7, 7, 9, 11, 13, 14, 15, 17, 17];
+        let inventarioPeligros = {
+            'Trampa': 3,
+            'Serpiente': 3,
+            'Lava': 3,
+            'Araña': 3,
+            'Rocas': 3
+        };
+        const CARTAS_RELIQUIAS = [5, 7, 8, 10, 12];
+        let reliquiasDisponibles = [...CARTAS_RELIQUIAS];
         let mazoCueva = [];
         let cartasReveladas = [];
 
         // --- FUNCIONES EXPUESTAS AL WINDOW (Para el HTML) ---
 
+
+        function eliminarPeligroDelJuego(nombrePeligro) {
+            if (inventarioPeligros[nombrePeligro] > 0) {
+                inventarioPeligros[nombrePeligro]--;
+                console.log(`Se ha eliminado una carta de ${nombrePeligro}. Quedan: ${inventarioPeligros[nombrePeligro]}`);
+            }
+        }
+
         window.iniciarExpedicion = function () {
             if (rondaActual > MAX_RONDAS) {
-                alert("¡Fin del juego! Mira quién tiene más gemas en el baúl.");
+                mostrarPodioFinal(); // Función para el final del juego
                 return;
             }
 
-            // Preparar mazo y estado
             mazoCueva = generarMazo();
             cartasReveladas = [];
             peligrosRevelados = [];
@@ -476,6 +495,7 @@
 
             document.getElementById('cave-path').innerHTML = '';
             actualizarInterfaz();
+            actualizarIconosSuelo();
             prepararVotacion();
         }
 
@@ -484,6 +504,30 @@
             const fugitivos = listaJugadores.filter(p => p.estado === 'explorando' && decisionesTurno[p.id] === 'leave');
 
             if (fugitivos.length > 0) {
+                // REGLA DE RELIQUIA: Solo si sale UNA persona
+                const reliquiasEnPantalla = document.querySelectorAll('.reliquia-activa');
+                if (fugitivos.length === 1 && reliquiasEnPantalla.length > 0) {
+                    let botinReliquias = 0;
+
+                    reliquiasEnPantalla.forEach(carta => {
+                        const valor = parseInt(carta.getAttribute('data-valor'));
+                        botinReliquias += valor;
+
+                        console.log(valor)
+
+                        // Quitamos la reliquia de las disponibles para próximas rondas
+                        reliquiasDisponibles = reliquiasDisponibles.filter(v => v !== valor);
+
+                        // Efecto visual de recogida
+                        carta.classList.replace('bg-amber-600', 'bg-gray-700');
+                        carta.classList.remove('reliquia-activa');
+                        carta.innerHTML = `<span class="text-3xl opacity-20">🏺</span><span class="text-[8px] uppercase">Recogida</span>`;
+                    });
+
+                    fugitivos[0].baul += botinReliquias;
+                    alert(`¡${fugitivos[0].nombre} se ha llevado ${reliquiasEnPantalla.length} reliquias! (+${botinReliquias}💎)`);
+                }
+
                 const porPersona = Math.floor(gemasEnSuelo / fugitivos.length);
                 gemasEnSuelo %= fugitivos.length;
 
@@ -492,9 +536,11 @@
                     p.gemasEnMano = 0;
                     p.estado = 'a_salvo';
                 });
+
+                actualizarIconosSuelo();
             }
 
-            // 2. Revelar carta si queda alguien
+            // 2. Continuar con la revelación de carta...
             const supervivientes = listaJugadores.filter(p => p.estado === 'explorando');
             if (supervivientes.length > 0) {
                 sacarCartaCueva(supervivientes);
@@ -503,17 +549,71 @@
             }
         }
 
+        function actualizarIconosSuelo() {
+            const pathTitle = document.querySelector('#cave-path').previousElementSibling;
 
+            if (gemasEnSuelo === 0) {
+                // Si no queda nada, limpiamos todos los badges de las cartas
+                const badges = document.querySelectorAll('.gema-suelo-badge');
+                badges.forEach(badge => badge.remove());
+
+                if (pathTitle) {
+                    pathTitle.innerHTML = `Camino de la Expedición`;
+                }
+            } else {
+                // Si aún quedan diamantes (el sobrante del reparto), actualizamos el texto superior
+                // para que el narrador y los jugadores vean el total real disponible
+                if (pathTitle) {
+                    pathTitle.innerHTML = `Camino de la Expedición <span class="ml-4 text-yellow-400 animate-pulse">| Quedan en el suelo: 💎${gemasEnSuelo}</span>`;
+                }
+
+                // Opcional: Podrías limpiar los badges individuales y dejar solo el contador 
+                // en el título para evitar confusiones de "en qué carta estaba el diamante".
+            }
+        }
+
+        function repartirGemasSuelo(fugitivos) {
+            // Calculamos el reparto equitativo
+            const porPersona = Math.floor(gemasEnSuelo / fugitivos.length);
+
+            // IMPORTANTE: Actualizamos el residuo que se queda en el suelo
+            gemasEnSuelo = gemasEnSuelo % fugitivos.length;
+
+            fugitivos.forEach(p => {
+                p.baul += (p.gemasEnMano + porPersona);
+                p.gemasEnMano = 0;
+                p.estado = 'a_salvo';
+            });
+
+            actualizarInterfaz();
+            actualizarIconosSuelo(); // Llamamos a la actualización visual
+        }
 
 
         // --- LÓGICA INTERNA ---
 
         function generarMazo() {
             let nuevoMazo = [];
-            CARTAS_TESORO.forEach(v => nuevoMazo.push({ tipo: 'tesoro', valor: v }));
-            TIPOS_PELIGRO.forEach(p => {
-                for (let i = 0; i < 3; i++) nuevoMazo.push({ tipo: 'peligro', nombre: p });
+
+            // 1. Tesoros (15 cartas corregidas)
+            const CARTAS_TESORO_FULL = [1, 2, 3, 4, 5, 5, 7, 7, 9, 11, 13, 14, 15, 17, 17];
+            CARTAS_TESORO_FULL.forEach(v => nuevoMazo.push({ tipo: 'tesoro', valor: v }));
+
+            // 2. Peligros (basado en lo que queda en el inventario)
+            for (let tipo in inventarioPeligros) {
+                for (let i = 0; i < inventarioPeligros[tipo]; i++) {
+                    nuevoMazo.push({ tipo: 'peligro', nombre: tipo });
+                }
+            }
+
+            // 3. Reliquias
+            reliquiasDisponibles.forEach(valor => {
+                nuevoMazo.push({ tipo: 'reliquia', valor: valor, nombre: `Reliquia de ${valor}` });
             });
+
+            console.log(nuevoMazo)
+
+            // Mezclar el mazo aleatoriamente
             return nuevoMazo.sort(() => Math.random() - 0.5);
         }
 
@@ -522,34 +622,66 @@
             cartasReveladas.push(carta);
 
             const container = document.getElementById('cave-path');
+
+            // Contenedor de la carta (Relativo para posicionar el sobrante encima)
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = "relative flex flex-col items-center";
+
             const cardEl = document.createElement('div');
-            cardEl.className = "bg-gray-800 border-2 border-acento p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] animate-bounce";
+            // Eliminado 'animate-bounce' para que las cartas estén estáticas
+            cardEl.className = "bg-gray-800 border-2 border-acento p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[120px]";
+
+
 
             if (carta.tipo === 'tesoro') {
                 const porPersona = Math.floor(carta.valor / jugadores.length);
-                gemasEnSuelo += (carta.valor % jugadores.length);
+                const sobranteTurno = carta.valor % jugadores.length;
+                gemasEnSuelo += sobranteTurno;
 
                 jugadores.forEach(p => p.gemasEnMano += porPersona);
-                cardEl.innerHTML = `<span class="text-2xl">💎</span><span class="font-black">${carta.valor}</span>`;
+
+                cardEl.innerHTML = `<span class="text-3xl mb-1">💎</span> <span class="font-black text-xl text-white">${carta.valor}</span>`;
+
+                // Si hay sobrante en esta carta, añadimos un indicador visual
+                if (sobranteTurno > 0) {
+                    const extraEl = document.createElement('div');
+                    extraEl.className = "gema-suelo-badge absolute -top-2 -right-2 bg-yellow-500 text-gray-900 text-[10px] font-bold px-2 py-1 rounded-full border border-gray-900 shadow-md z-20";
+                    extraEl.innerHTML = `+${sobranteTurno} 💎`;
+                    cardWrapper.appendChild(extraEl);
+                }
+            } else if (carta.tipo === 'reliquia') {
+                cardEl.classList.add('reliquia-activa', 'bg-amber-600', 'border-2', 'border-yellow-300');
+                cardEl.setAttribute('data-valor', carta.valor); // Guardamos el valor en el HTML
+                cardEl.className = "reliquia-activa bg-amber-600 border-2 border-yellow-300 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[120px]";
+                cardEl.innerHTML = `<span class="text-3xl mb-1">🏺</span><span class="text-[10px] font-bold uppercase text-yellow-100 text-center">${carta.nombre}</span>`;
             } else {
-                cardEl.className = "bg-red-900 border-2 border-red-500 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px]";
-                cardEl.innerHTML = `<span class="text-2xl">⚠️</span><span class="text-[10px] font-bold uppercase">${carta.nombre}</span>`;
+                cardEl.className = "bg-red-900 border-2 border-red-500 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[120px]";
+                cardEl.innerHTML = `<span class="text-3xl mb-1">⚠️</span> <span class="text-[10px] font-bold uppercase text-red-100 text-center">${carta.nombre}</span>`;
 
                 if (peligrosRevelados.includes(carta.nombre)) {
-                    alert("¡SEGUNDO PELIGRO! La expedición termina de golpe.");
-                    jugadores.forEach(p => {
-                        p.gemasEnMano = 0;
-                        p.estado = 'fuera';
-                    });
-                    finalizarExpedicion("¡Peligro repetido!");
+                    // Mostramos la carta antes del alert
+                    cardWrapper.appendChild(cardEl);
+                    container.appendChild(cardWrapper);
+                    actualizarInterfaz();
+
+                    setTimeout(() => {
+                        alert(`¡SEGUNDO PELIGRO DE ${carta.nombre.toUpperCase()}! La expedición termina.`);
+                        jugadores.forEach(p => {
+                            p.gemasEnMano = 0;
+                            p.estado = 'fuera';
+                        });
+                        // Pasamos el nombre del peligro para que se elimine una carta
+                        finalizarExpedicion(`¡Peligro repetido: ${carta.nombre}!`, carta.nombre);
+                    }, 100);
                     return;
                 }
                 peligrosRevelados.push(carta.nombre);
             }
 
-            container.appendChild(cardEl);
+            cardWrapper.appendChild(cardEl);
+            container.appendChild(cardWrapper);
             actualizarInterfaz();
-            prepararVotacion(); // Reiniciar botones para el siguiente turno
+            prepararVotacion();
         }
 
         let decisionesTurno = {};
@@ -566,7 +698,7 @@
                 const btn = document.createElement('button');
                 btn.className = "px-4 py-2 rounded-lg border-2 border-gray-600 font-bold transition-all text-sm";
                 btn.style.borderColor = p.color;
-                btn.innerHTML = `${p.nombre}<br><span class="text-[9px] opacity-70">SE QUEDA</span>`;
+                btn.innerHTML = `${p.nombre} <br><span class="text-[9px] opacity-70">SE QUEDA</span>`;
 
                 btn.onclick = () => {
                     if (decisionesTurno[p.id] === 'keep') {
@@ -583,12 +715,23 @@
             });
         }
 
-        function finalizarExpedicion(motivo) {
-            console.log(motivo);
+        function finalizarExpedicion(motivo, peligroAEliminar = null) {
+            if (peligroAEliminar) {
+                // Buscamos el índice del peligro en nuestro array de tipos
+                // En el juego original, se elimina una carta física del mazo.
+                // Aquí lo gestionaremos en una variable global de "Peligros Disponibles".
+                eliminarPeligroDelJuego(peligroAEliminar);
+            }
+
             rondaActual++;
             setTimeout(() => {
-                if (confirm(motivo + " ¿Empezar siguiente expedición?")) {
-                    window.iniciarExpedicion();
+                if (rondaActual <= MAX_RONDAS) {
+                    if (confirm(motivo + " ¿Empezar siguiente expedición?")) {
+                        window.iniciarExpedicion();
+                    }
+                } else {
+                    alert("¡Fin de la partida! Comprobando baúles...");
+                    // Aquí iría tu función de podio final
                 }
             }, 500);
         }
