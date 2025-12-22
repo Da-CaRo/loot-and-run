@@ -11,7 +11,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&display=swap" rel="stylesheet">
-    <script src="https://raw.githubusercontent.com/Da-CaRo/site-configs/main/control.js" data-web="loot-and-run"></script>
+    <script src="https://raw.githubusercontent.com/Da-CaRo/site-configs/main/control.js"
+        data-web="loot-and-run"></script>
 
     <style>
         /* 1. DEFINICIÓN DE VARIABLES DE COLOR */
@@ -214,21 +215,31 @@
         </div>
     </div>
     <main class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div id="game-layout" class="hidden flex flex-col space-y-6">
 
-        <div id="game-layout" class="flex flex-col lg:flex-row lg:space-x-4 hidden">
+            <div id="players-status" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            </div>
 
-            <div id="control-bar-wrapper"
-                class="flex flex-col sm:flex-row lg:flex-col justify-between items-center w-full lg:w-64 mb-6 lg:mb-0">
-                <div id="game-stats" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-1 gap-3 w-full hidden">
-
+            <div class="bg-gray-900 p-6 rounded-xl border border-gray-700 min-h-[200px]">
+                <h3 class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">Camino de la Expedición</h3>
+                <div id="cave-path" class="flex flex-wrap gap-4">
                 </div>
-
             </div>
 
-            <div id="game-board" class="grid gap-0.5 w-full lg:flex-1 bg-gray-800 p-1 rounded shadow-2xl ">
+            <div id="turn-actions" class="bg-gray-800 p-6 rounded-xl border-t-4 border-acento">
+                <div id="narrator-controls" class="text-center">
+                    <h3 class="text-xl mb-4 font-bold text-acento">Paso 1: ¿Quiénes se retiran?</h3>
+                    <p class="text-gray-400 text-sm mb-6">Elige a los jugadores que han mostrado la carta de "SALIR"</p>
 
+                    <div id="decision-list" class="flex flex-wrap justify-center gap-3 mb-8">
+                    </div>
+
+                    <button id="btn-revelar-carta" onclick="procesarTurno()"
+                        class="bg-acento text-gray-900 px-10 py-4 rounded-full font-black uppercase shadow-[0_0_20px_rgba(45,255,235,0.4)] hover:scale-105 transition-transform">
+                        Revelar Siguiente Carta 🃏
+                    </button>
+                </div>
             </div>
-        </div>
 
         </div>
     </main>
@@ -267,17 +278,16 @@
     <script type="module">
         document.getElementById('currentYearFooter').textContent = new Date().getFullYear();
 
+        // --- VARIABLES DE ESTADO DEL JUEGO ---
         let listaJugadores = [];
+        let jugadoresTemporales = [];
         let rondaActual = 1;
-        const MAX_RONDAS = 3;
+        const MAX_RONDAS = 5; // Diamant son 5 expediciones
 
+        let mazo = [];
+        let peligrosRevelados = [];
+        let gemasEnSuelo = 0; // Gemas que sobran en el camino
 
-        // --- Lógica del Juego ---
-
-        // --- Integración con los clics ---
-
-        // Botón de inicio
-        // Configurar jugadores al empezar
         const coloresJugadores = [
             { nombre: 'Rojo', hex: '#ef4444' },
             { nombre: 'Azul', hex: '#3b82f6' },
@@ -291,66 +301,27 @@
             { nombre: 'Blanco', hex: '#f8fafc' }
         ];
 
-        document.getElementById('start-btn').addEventListener('click', () => {
-            listaJugadores = [...jugadoresTemporales];
+        // --- GESTIÓN DE JUGADORES (SETUP) ---
 
-            document.getElementById('start-buttons').classList.add('hidden');
-            document.getElementById('game-layout').classList.remove('hidden');
-            document.getElementById('game-stats').classList.remove('hidden');
-            document.getElementById('reset-game-btn').classList.remove('hidden');
+        document.getElementById('add-player-btn').onclick = () => {
+            const input = document.getElementById('player-name-input');
+            const nombre = input.value.trim();
 
-            generateBoard();
-            iniciarRonda();
-            actualizarProgresoNav();
-            guardarPartida()
-        });
-
-
-        const guideModal = document.getElementById('guide-modal');
-        const targetPreview = document.getElementById('target-preview');
-        const closeModalBtn = document.getElementById('close-modal-btn');
-
-
-        function iniciarRonda() {
-            votosRealizados = 0;
-            jugadorActualVotando = (indiceGuiaActual + 1) % listaJugadores.length;
-
-            const guia = listaJugadores[indiceGuiaActual];
-            actualizarMarcador();
-            actualizarProgresoNav();
-
-            // ALERT DE PRIVACIDAD
-            // Usamos setTimeout para asegurar que el marcador se actualice antes del alert
-            setTimeout(() => {
-                alert(`¡ATENCIÓN!\n\nEs el turno de ${guia.nombre} como Guía.\n\nAsegúrate de que nadie más esté mirando la pantalla antes de pulsar Aceptar.`);
-                seleccionarColorSecreto();
-            }, 100);
-        }
-
-        function actualizarProgresoNav() {
-            const progressContainer = document.getElementById('game-progress');
-            const roundText = document.getElementById('round-count');
-            const guideText = document.getElementById('guide-count');
-
-            // Comprobamos que los elementos existan antes de actuar
-            if (progressContainer && roundText && guideText && listaJugadores.length > 0) {
-                progressContainer.classList.remove('hidden');
-                roundText.textContent = `${rondaActual}/${MAX_RONDAS}`;
-                const guiasCompletados = (indiceGuiaActual % listaJugadores.length) + 1;
-                guideText.textContent = `${guiasCompletados}/${listaJugadores.length}`;
-            }
-        }
-
-        // También el botón de "Salir" del header
-        document.getElementById('reset-game-btn').onclick = () => {
-            if (confirm("¿Deseas abandonar la partida actual?")) {
-                localStorage.removeItem('loot_and_run_game_state');
-                location.reload();
+            if (nombre && jugadoresTemporales.length < 10) {
+                const colorAsignado = coloresJugadores[jugadoresTemporales.length % coloresJugadores.length].hex;
+                jugadoresTemporales.push({
+                    id: Date.now(),
+                    nombre: nombre,
+                    color: colorAsignado,
+                    gemasEnMano: 0, // Lo que lleva en la cueva actualmente
+                    baul: 0,        // Lo que ya ha asegurado
+                    estado: 'explorando' // 'explorando', 'a_salvo', 'fuera'
+                });
+                input.value = '';
+                actualizarVistaPreviaJugadores();
+                guardarNombresTemporales();
             }
         };
-
-
-        let jugadoresTemporales = [];
 
         function actualizarVistaPreviaJugadores() {
             const container = document.getElementById('players-list-display');
@@ -359,7 +330,6 @@
 
             jugadoresTemporales.forEach((jugador, index) => {
                 const badge = document.createElement('div');
-                // El contenedor entero es el que se mueve
                 badge.draggable = true;
                 badge.className = 'flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-black transition-all duration-200 shadow-sm select-none';
                 badge.style.backgroundColor = jugador.color;
@@ -367,141 +337,270 @@
 
                 badge.innerHTML = `
             <span class="cursor-grab active:cursor-grabbing opacity-50 hover:opacity-100 px-1 text-lg drag-handle">⋮⋮</span>
-            
             <span class="flex-1 py-1 cursor-pointer hover:underline name-zone px-1" draggable="false">${jugador.nombre}</span>
-            
             <button class="opacity-40 hover:opacity-100 hover:text-white transition-opacity text-xl px-2 cursor-pointer delete-btn" 
                     type="button" style="background:none; border:none; color:inherit; font-weight:bold;">×</button>
         `;
 
-                const zonaNombre = badge.querySelector('.name-zone');
-                const btnEliminar = badge.querySelector('.delete-btn');
-
-                // --- 1. LÓGICA DE COLOR (Ahora funciona siempre) ---
-                zonaNombre.onclick = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-
+                // Cambiar color al hacer clic en el nombre
+                badge.querySelector('.name-zone').onclick = () => {
                     let colorIndex = coloresJugadores.findIndex(c => c.hex === jugador.color);
                     colorIndex = (colorIndex + 1) % coloresJugadores.length;
                     jugador.color = coloresJugadores[colorIndex].hex;
-
-                    // Actualización visual inmediata
-                    badge.style.backgroundColor = jugador.color;
+                    actualizarVistaPreviaJugadores();
                     guardarNombresTemporales();
                 };
 
-                // --- 2. LÓGICA DE ELIMINAR ---
-                btnEliminar.onclick = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.eliminarJugadorTemporal(index);
+                // Eliminar jugador
+                badge.querySelector('.delete-btn').onclick = () => {
+                    jugadoresTemporales.splice(index, 1);
+                    actualizarVistaPreviaJugadores();
+                    guardarNombresTemporales();
                 };
 
-                // --- 3. LÓGICA DE ARRASTRE ---
-                badge.addEventListener('dragstart', (e) => {
-                    // Si el usuario pincha en el nombre o en el botón eliminar, CANCELAMOS el drag
-                    // para permitir que el evento 'onclick' del color funcione.
-                    if (e.target.classList.contains('name-zone') || e.target.closest('.delete-btn')) {
-                        e.preventDefault();
-                        return;
-                    }
-
-                    // Solo permitimos arrastrar si se agarra desde el badge o el handle
-                    e.dataTransfer.setData('text/plain', index);
-                    badge.style.opacity = '0.5';
-                });
-
-                badge.addEventListener('dragend', () => {
-                    badge.style.opacity = '1';
-                });
-
-                badge.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    badge.classList.add('scale-105', 'ring-2', 'ring-white/20');
-                });
-
-                badge.addEventListener('dragleave', () => {
-                    badge.classList.remove('scale-105', 'ring-2', 'ring-white/20');
-                });
-
-                badge.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    const fromIndex = e.dataTransfer.getData('text/plain');
-                    const toIndex = index;
-                    if (fromIndex !== "" && fromIndex !== toIndex.toString()) {
-                        const movedItem = jugadoresTemporales.splice(fromIndex, 1)[0];
-                        jugadoresTemporales.splice(toIndex, 0, movedItem);
-                        actualizarVistaPreviaJugadores();
-                        guardarNombresTemporales();
-                    }
-                });
+                // Lógica de Drag & Drop (simplificada)
+                badge.ondragstart = (e) => { if (e.target.classList.contains('name-zone')) e.preventDefault(); e.dataTransfer.setData('text', index); };
+                badge.ondragover = (e) => e.preventDefault();
+                badge.ondrop = (e) => {
+                    const fromIndex = e.dataTransfer.getData('text');
+                    const item = jugadoresTemporales.splice(fromIndex, 1)[0];
+                    jugadoresTemporales.splice(index, 0, item);
+                    actualizarVistaPreviaJugadores();
+                    guardarNombresTemporales();
+                };
 
                 container.appendChild(badge);
             });
 
-            // Validación del botón de inicio
-            if (jugadoresTemporales.length >= 3 && jugadoresTemporales.length <= 10) {
-                startBtn.disabled = false;
-                startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else {
-                startBtn.disabled = true;
-                startBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
+            startBtn.disabled = jugadoresTemporales.length < 3;
+            startBtn.textContent = jugadoresTemporales.length < 3 ? `Mínimo 3 jugadores` : `Empezar Partida`;
         }
 
-        function eliminarJugadorTemporal(index) {
-            jugadoresTemporales.splice(index, 1);
-            actualizarVistaPreviaJugadores();
-            guardarNombresTemporales();
-        }
+        // --- LÓGICA DE CONTROL DE LA PARTIDA ---
 
-        window.eliminarJugadorTemporal = eliminarJugadorTemporal;
+        document.getElementById('start-btn').addEventListener('click', () => {
+            listaJugadores = [...jugadoresTemporales];
+            document.getElementById('start-buttons').classList.add('hidden');
+            document.getElementById('game-layout').classList.remove('hidden');
+            document.getElementById('reset-game-btn').classList.remove('hidden');
 
-        // Actualiza tu botón de añadir
-        document.getElementById('add-player-btn').onclick = () => {
-            const input = document.getElementById('player-name-input');
-            const nombre = input.value.trim();
-
-            if (nombre && jugadoresTemporales.length < 10) {
-                const colorAsignado = coloresJugadores[jugadoresTemporales.length % coloresJugadores.length].hex;
-
-                jugadoresTemporales.push({
-                    id: Date.now(), // Usamos timestamp para ID único
-                    nombre: nombre,
-                    color: colorAsignado,
-                    puntos: 0
-                });
-
-                input.value = '';
-                actualizarVistaPreviaJugadores();
-                guardarNombresTemporales(); // <--- GUARDAR AQUÍ
-            }
-        };
-
-        // Permitir añadir pulsando "Enter"
-        document.getElementById('player-name-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') document.getElementById('add-player-btn').click();
+            iniciarExpedicion();
         });
 
-        // Función auxiliar para persistir solo los nombres y colores elegidos
+        function iniciarExpedicion() {
+            peligrosRevelados = [];
+            gemasEnSuelo = 0;
+            listaJugadores.forEach(p => {
+                p.gemasEnMano = 0;
+                p.estado = 'explorando';
+            });
+
+            actualizarInterfaz();
+            console.log("Expedición " + rondaActual + " iniciada");
+        }
+
+        function actualizarInterfaz() {
+            const progressContainer = document.getElementById('game-progress');
+            const roundText = document.getElementById('round-count');
+
+            progressContainer.classList.remove('hidden');
+            roundText.textContent = `${rondaActual}/${MAX_RONDAS}`;
+
+            // Aquí actualizaremos los cuadros de los jugadores (Status)
+            const statusContainer = document.getElementById('players-status');
+            statusContainer.innerHTML = '';
+
+            listaJugadores.forEach(p => {
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-lg border ${p.estado === 'explorando' ? 'bg-gray-800 border-gray-600' : 'bg-gray-900 border-red-900 opacity-50'}`;
+                card.innerHTML = `
+            <div class="flex items-center justify-between">
+                <span style="color: ${p.color}" class="font-bold">${p.nombre}</span>
+                <span class="text-xs text-gray-500">${p.estado.toUpperCase()}</span>
+            </div>
+            <div class="flex justify-between mt-2">
+                <span class="text-xs">Mano: 💎${p.gemasEnMano}</span>
+                <span class="text-xs font-bold text-acento">Baúl: 💎${p.baul}</span>
+            </div>
+        `;
+                statusContainer.appendChild(card);
+            });
+        }
+
+        // --- PERSISTENCIA BÁSICA ---
+
         function guardarNombresTemporales() {
             localStorage.setItem('loot_and_run_nombres_recientes', JSON.stringify(jugadoresTemporales));
         }
 
         function cargarNombresRecientes() {
-            // Si NO hay una partida en curso, cargamos la lista previa
-            if (!localStorage.getItem('loot_and_run_game_state')) {
-                const guardados = localStorage.getItem('loot_and_run_nombres_recientes');
-                if (guardados) {
-                    jugadoresTemporales = JSON.parse(guardados);
-                    actualizarVistaPreviaJugadores();
-                }
+            const guardados = localStorage.getItem('loot_and_run_nombres_recientes');
+            if (guardados) {
+                jugadoresTemporales = JSON.parse(guardados);
+                actualizarVistaPreviaJugadores();
             }
         }
 
-        // Ejecutar al cargar
+        document.getElementById('reset-game-btn').onclick = () => {
+            if (confirm("¿Deseas abandonar la expedición?")) {
+                location.reload();
+            }
+        };
+
         cargarNombresRecientes();
+
+        // --- VARIABLES DE CARTAS Y MAZO ---
+        const CARTAS_TESORO = [1, 2, 3, 4, 5, 5, 7, 7, 9, 11, 13, 14, 15, 17];
+        const TIPOS_PELIGRO = ['Trampa', 'Serpiente', 'Lava', 'Araña', 'Rocas'];
+        let mazoCueva = [];
+        let cartasReveladas = [];
+
+        // --- FUNCIONES EXPUESTAS AL WINDOW (Para el HTML) ---
+
+        window.iniciarExpedicion = function () {
+            if (rondaActual > MAX_RONDAS) {
+                alert("¡Fin del juego! Mira quién tiene más gemas en el baúl.");
+                return;
+            }
+
+            // Preparar mazo y estado
+            mazoCueva = generarMazo();
+            cartasReveladas = [];
+            peligrosRevelados = [];
+            gemasEnSuelo = 0;
+
+            listaJugadores.forEach(p => {
+                p.gemasEnMano = 0;
+                p.estado = 'explorando';
+            });
+
+            document.getElementById('cave-path').innerHTML = '';
+            actualizarInterfaz();
+            prepararVotacion();
+        }
+
+        window.procesarTurno = function () {
+            // 1. Gestionar fugitivos
+            const fugitivos = listaJugadores.filter(p => p.estado === 'explorando' && decisionesTurno[p.id] === 'leave');
+
+            if (fugitivos.length > 0) {
+                const porPersona = Math.floor(gemasEnSuelo / fugitivos.length);
+                gemasEnSuelo %= fugitivos.length;
+
+                fugitivos.forEach(p => {
+                    p.baul += (p.gemasEnMano + porPersona);
+                    p.gemasEnMano = 0;
+                    p.estado = 'a_salvo';
+                });
+            }
+
+            // 2. Revelar carta si queda alguien
+            const supervivientes = listaJugadores.filter(p => p.estado === 'explorando');
+            if (supervivientes.length > 0) {
+                sacarCartaCueva(supervivientes);
+            } else {
+                finalizarExpedicion("Todos han salido o han caído.");
+            }
+        }
+
+
+
+
+        // --- LÓGICA INTERNA ---
+
+        function generarMazo() {
+            let nuevoMazo = [];
+            CARTAS_TESORO.forEach(v => nuevoMazo.push({ tipo: 'tesoro', valor: v }));
+            TIPOS_PELIGRO.forEach(p => {
+                for (let i = 0; i < 3; i++) nuevoMazo.push({ tipo: 'peligro', nombre: p });
+            });
+            return nuevoMazo.sort(() => Math.random() - 0.5);
+        }
+
+        function sacarCartaCueva(jugadores) {
+            const carta = mazoCueva.pop();
+            cartasReveladas.push(carta);
+
+            const container = document.getElementById('cave-path');
+            const cardEl = document.createElement('div');
+            cardEl.className = "bg-gray-800 border-2 border-acento p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] animate-bounce";
+
+            if (carta.tipo === 'tesoro') {
+                const porPersona = Math.floor(carta.valor / jugadores.length);
+                gemasEnSuelo += (carta.valor % jugadores.length);
+
+                jugadores.forEach(p => p.gemasEnMano += porPersona);
+                cardEl.innerHTML = `<span class="text-2xl">💎</span><span class="font-black">${carta.valor}</span>`;
+            } else {
+                cardEl.className = "bg-red-900 border-2 border-red-500 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px]";
+                cardEl.innerHTML = `<span class="text-2xl">⚠️</span><span class="text-[10px] font-bold uppercase">${carta.nombre}</span>`;
+
+                if (peligrosRevelados.includes(carta.nombre)) {
+                    alert("¡SEGUNDO PELIGRO! La expedición termina de golpe.");
+                    jugadores.forEach(p => {
+                        p.gemasEnMano = 0;
+                        p.estado = 'fuera';
+                    });
+                    finalizarExpedicion("¡Peligro repetido!");
+                    return;
+                }
+                peligrosRevelados.push(carta.nombre);
+            }
+
+            container.appendChild(cardEl);
+            actualizarInterfaz();
+            prepararVotacion(); // Reiniciar botones para el siguiente turno
+        }
+
+        let decisionesTurno = {};
+        function prepararVotacion() {
+            const container = document.getElementById('decision-list');
+            container.innerHTML = '';
+            decisionesTurno = {};
+
+            const activos = listaJugadores.filter(p => p.estado === 'explorando');
+            if (activos.length === 0) return;
+
+            activos.forEach(p => {
+                decisionesTurno[p.id] = 'keep';
+                const btn = document.createElement('button');
+                btn.className = "px-4 py-2 rounded-lg border-2 border-gray-600 font-bold transition-all text-sm";
+                btn.style.borderColor = p.color;
+                btn.innerHTML = `${p.nombre}<br><span class="text-[9px] opacity-70">SE QUEDA</span>`;
+
+                btn.onclick = () => {
+                    if (decisionesTurno[p.id] === 'keep') {
+                        decisionesTurno[p.id] = 'leave';
+                        btn.classList.add('bg-red-600', 'text-white');
+                        btn.querySelector('span').innerText = 'SALE 🏃‍♂️';
+                    } else {
+                        decisionesTurno[p.id] = 'keep';
+                        btn.classList.remove('bg-red-600', 'text-white');
+                        btn.querySelector('span').innerText = 'SE QUEDA';
+                    }
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function finalizarExpedicion(motivo) {
+            console.log(motivo);
+            rondaActual++;
+            setTimeout(() => {
+                if (confirm(motivo + " ¿Empezar siguiente expedición?")) {
+                    window.iniciarExpedicion();
+                }
+            }, 500);
+        }
+
+        // Actualizar el botón de inicio para llamar a la nueva función expuesta
+        document.getElementById('start-btn').addEventListener('click', () => {
+            listaJugadores = [...jugadoresTemporales];
+            document.getElementById('start-buttons').classList.add('hidden');
+            document.getElementById('game-layout').classList.remove('hidden');
+            document.getElementById('reset-game-btn').classList.remove('hidden');
+            window.iniciarExpedicion();
+        });
 
     </script>
 
