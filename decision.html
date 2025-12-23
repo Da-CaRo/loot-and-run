@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <title>Mando - Loot & Run</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ruslan+Display&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --color-acento: #10b981;
+            --color-fondo: #061612;
+            --color-tarjeta: #1e293b;
+            --color-texto: #f8fafc;
+        }
+
+        body {
+            background-color: var(--color-fondo);
+            color: var(--color-texto);
+            font-family: ui-sans-serif, system-ui, sans-serif;
+            overflow: hidden; /* Evita scroll en el mando */
+        }
+
+        .font-loot-and-run { font-family: 'Ruslan Display', cursive; }
+
+        .text-loot-and-run {
+            background: linear-gradient(135deg, #a7f3d0 0%, #10b981 25%, #065f46 50%, #10b981 75%, #047857 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.2));
+            background-size: 200% auto;
+            animation: shine 5s linear infinite;
+        }
+
+        @keyframes shine { to { background-position: 200% center; } }
+
+        /* Botones gigantes con efecto cristal/gema */
+        .btn-decision {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-width: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 40vh;
+            width: 100%;
+            border-radius: 1.5rem;
+            text-transform: uppercase;
+            font-weight: 900;
+        }
+
+        .btn-keep {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: #10b981;
+            color: #10b981;
+        }
+
+        .btn-keep:active {
+            background: #10b981;
+            color: white;
+            transform: scale(0.95);
+        }
+
+        .btn-leave {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .btn-leave:active {
+            background: #ef4444;
+            color: white;
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <header class="bg-gray-900 shadow-md p-4 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto flex justify-center items-center">
+            <div class="flex items-center space-x-2">
+                <img src="img/favicon.png" alt="Icono" class="h-8 w-8">
+                <h1 class="text-3xl font-extrabold text-loot-and-run font-loot-and-run">
+                    Loot & Run
+                </h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow flex flex-col p-6 gap-6 justify-center">
+        
+        <button onclick="confirmarAccion('SE QUEDA', 'keep')" class="btn-decision btn-keep">
+            <span class="text-6xl mb-4 text-white">⛏️</span>
+            <span class="text-4xl">Seguir</span>
+            <span class="text-xs opacity-60 mt-2">Continuar explorando</span>
+        </button>
+
+        <button onclick="confirmarAccion('SALE', 'leave')" class="btn-decision btn-leave">
+            <span class="text-6xl mb-4 text-white">🏃‍♂️</span>
+            <span class="text-4xl">Salir</span>
+            <span class="text-xs opacity-60 mt-2">Asegurar tesoros</span>
+        </button>
+
+    </main>
+
+    <div id="modal-confirmacion" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-6">
+        <div id="modal-content" class="w-full max-w-md rounded-3xl p-10 text-center border-4 shadow-2xl transition-all scale-90">
+            <h2 id="accion-texto" class="text-5xl font-black mb-4 uppercase italic"></h2>
+            <p class="text-gray-400 font-bold tracking-widest uppercase text-sm mb-8">Decisión Registrada</p>
+            
+            <button onclick="cerrarModal()" class="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-full font-bold transition-all border border-white/20">
+                Cambiar decisión
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function confirmarAccion(texto, tipo) {
+            const modal = document.getElementById('modal-confirmacion');
+            const content = document.getElementById('modal-content');
+            const txt = document.getElementById('accion-texto');
+
+            txt.innerText = texto;
+            
+            // Ajustar colores del modal según la decisión
+            if (tipo === 'keep') {
+                content.className = "bg-gray-800 border-emerald-500 w-full max-w-md rounded-3xl p-10 text-center border-4 shadow-[0_0_50px_rgba(16,185,129,0.4)]";
+                txt.className = "text-5xl font-black mb-4 uppercase italic text-emerald-400";
+            } else {
+                content.className = "bg-gray-800 border-red-500 w-full max-w-md rounded-3xl p-10 text-center border-4 shadow-[0_0_50px_rgba(239,68,68,0.4)]";
+                txt.className = "text-5xl font-black mb-4 uppercase italic text-red-500";
+            }
+
+            modal.classList.remove('hidden');
+            // Pequeña animación de entrada
+            setTimeout(() => content.classList.remove('scale-90'), 10);
+        }
+
+        function cerrarModal() {
+            const modal = document.getElementById('modal-confirmacion');
+            modal.classList.add('hidden');
+            document.getElementById('modal-content').classList.add('scale-90');
+        }
+    </script>
+</body>
+</html>
