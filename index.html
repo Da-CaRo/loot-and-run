@@ -129,6 +129,21 @@
             background: var(--color-acento);
             border-radius: 10px;
         }
+
+        /* Estilo específico para el scroll del podio */
+        #podium-list {
+            scrollbar-width: thin;
+            scrollbar-color: var(--color-acento) transparent;
+        }
+
+        #podium-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #podium-list::-webkit-scrollbar-thumb {
+            background-color: var(--color-acento);
+            border-radius: 20px;
+        }
     </style>
 </head>
 
@@ -292,11 +307,17 @@
             <h2 class="family-bungee text-4xl text-acento mb-2 text-shadow-neon">¡FIN DE LA AVENTURA!</h2>
             <p class="text-gray-400 mb-8 uppercase tracking-widest text-sm font-bold">Resultados de la expedición</p>
 
-            <div id="podium-list" class="space-y-4 mb-10">
+            <div id="podium-list" class="space-y-4 mb-10 max-h-[50vh] overflow-y-auto pr-4 custom-scrollbar">
             </div>
 
-            <button onclick="location.reload()"
-                class="bg-acento text-gray-900 px-10 py-4 rounded-full font-black uppercase hover:scale-105 transition-transform shadow-lg">
+            <button onclick="location.reload()" class="bg-gray-800 hover:bg-gray-700
+            text-white
+            px-8 py-2.5 
+            rounded-full font-black text-sm uppercase
+            transition-all duration-300
+            shadow-[0_0_20px_rgba(16,185,129,0.5)]
+            cursor-pointer
+            ">
                 Nueva Partida 🔄
             </button>
         </div>
