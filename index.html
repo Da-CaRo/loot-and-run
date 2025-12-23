@@ -10,16 +10,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ruslan+Display&display=swap" rel="stylesheet">
     <script src="https://raw.githubusercontent.com/Da-CaRo/site-configs/main/control.js"
         data-web="loot-and-run"></script>
 
     <style>
         /* 1. DEFINICIÓN DE VARIABLES DE COLOR */
         :root {
-            --color-acento: #2dffeb;
-            /* Turquesa vibrante */
-            --color-fondo: #0f172a;
+            --color-acento: #10b981;
+            /* Verde Esmeralda */
+            --color-fondo: #061612;
             /* Un azul pizarra muy oscuro (slate-900) */
             --color-tarjeta: #1e293b;
             /* Un tono más claro para las tarjetas (slate-800) */
@@ -46,30 +46,34 @@
         }
 
         .font-loot-and-run {
-            font-family: 'Bungee Shade', sans-serif;
-            text-transform: uppercase;
+            font-family: 'Ruslan Display', cursive;
         }
 
         /* Sobrescribir las clases de Tailwind con las variables (para el color de acento) */
         .text-loot-and-run {
-            /* Aplicación del Gradiente */
-            background: linear-gradient(45deg,
-                    var(--color-acento) 20%,
-                    #8f54b3 40%,
-                    #fcba49 60%,
-                    #2c75e3 90%);
+            /* Degradado de esmeralda con facetas */
+            background: linear-gradient(135deg,
+                    #a7f3d0 0%,
+                    /* Reflejo de luz en el borde */
+                    #10b981 25%,
+                    /* Verde esmeralda base */
+                    #065f46 50%,
+                    /* Sombra interna profunda */
+                    #10b981 75%,
+                    /* Reflejo secundario */
+                    #047857 100%);
 
-            /* Truco para que el fondo solo pinte el texto */
             -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             background-clip: text;
 
-            /* Hacemos transparente el color original de la fuente para ver el gradiente */
-            color: transparent;
-
-            filter: drop-shadow(0 0 8px rgba(30, 200, 197, 0.3));
-            line-height: 1.2;
-            display: inline-block;
-            /* Asegura que el gradiente se calcule bien */
+            /* El truco: Múltiples sombras para dar volumen de piedra */
+            filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.2));
+            text-shadow:
+                0px 2px 4px rgba(0, 0, 0, 0.5),
+                0px 0px 20px rgba(16, 185, 129, 0.4);
+            background-size: 200% auto;
+            animation: shine 5s linear infinite;
         }
 
         .text-acento {
@@ -103,6 +107,12 @@
             display: flex;
             flex-wrap: wrap;
             align-items: center;
+        }
+
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
         }
     </style>
 </head>
@@ -143,10 +153,11 @@
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
 
                 <h1 class="text-5xl md:text-6xl font-extrabold mb-4">
-                    Sintoniza tu percepción en el <span class="font-loot-and-run text-loot-and-run">espectro</span>
+                    <span class="font-loot-and-run text-loot-and-run">Escapa</span> antes de que sea demasiado tarde
                 </h1>
                 <p class="text-xl text-tarjeta mb-12 max-w-2xl mx-auto">
-                    Adéntrate en la cueva, roba el botín y escapa antes de que sea tarde.
+                    Antiguas reliquias y fortunas incalculables te esperan en la oscuridad. El camino es peligroso y la
+                    suerte es caprichosa. Solo el explorador más sabio sabe cuándo es momento de volver.
                 </p>
             </div>
 
@@ -777,8 +788,8 @@
                 const esGanador = puestoVisual === 1; // Ahora todos los que compartan el puesto 1 brillan
 
                 item.className = `flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-500 ${esGanador
-                        ? 'bg-yellow-500/10 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.2)]'
-                        : 'bg-gray-700/50 border-gray-600'
+                    ? 'bg-yellow-500/10 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.2)]'
+                    : 'bg-gray-700/50 border-gray-600'
                     }`;
 
                 item.innerHTML = `
