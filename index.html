@@ -253,36 +253,35 @@
         </div>
     </div>
     <main class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        <div id="game-layout" class="flex flex-col lg:grid lg:grid-cols-[280px_1fr] lg:gap-8 hidden">
+        <div id="game-layout" class="flex flex-col lg:grid lg:grid-cols-[200px_1fr] lg:gap-8 hidden min-h-[70vh]">
             <div id="control-bar-wrapper" class="flex flex-col w-full shrink-0">
                 <div id="players-status"
                     class="flex flex-col space-y-2 w-full max-h-[60vh] lg:max-h-[550px] overflow-y-auto pr-2 custom-scrollbar">
                 </div>
             </div>
 
-            <div class="flex flex-col space-y-4">
-                <div class="bg-gray-900 p-6 rounded-xl border border-gray-700 min-h-[200px]">
-                    <h3 class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">Camino de la Expedición
+            <div class="flex flex-col space-y-4 h-full">
+                <div class="bg-gray-900 p-6 rounded-xl border border-gray-700 min-h-[400px] flex-grow shadow-inner">
+                    <h3
+                        class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest flex justify-between items-center">
+                        <span>Camino de la Expedición</span>
+                        <span id="suelo-display" class="text-emerald-400 font-code normal-case">✳️ En el suelo: 0</span>
                     </h3>
-                    <div id="cave-path" class="flex flex-wrap gap-4">
+                    <div id="cave-path"
+                        class="flex flex-wrap gap-3 items-start content-start overflow-y-auto max-h-[350px] custom-scrollbar pt-4">
                     </div>
                 </div>
-                <div id="turn-actions" class="bg-gray-800 p-6 rounded-xl border-t-4 border-acento">
+
+                <div id="turn-actions" class="bg-gray-800 p-4 rounded-xl border-t-2 border-acento shadow-lg">
                     <div id="narrator-controls" class="text-center">
-                        <h3 class="text-xl mb-4 font-bold text-acento">¿Quiénes se retiran?</h3>
-
-                        <div id="decision-list" class="flex flex-wrap justify-center gap-3 mb-8">
+                        <p class="text-[10px] uppercase font-black text-gray-500 mb-2 tracking-tighter">Fase de Retirada
+                        </p>
+                        <div id="decision-list"
+                            class="flex flex-wrap justify-center gap-2 max-h-[120px] overflow-y-auto custom-scrollbar">
                         </div>
-
-
                     </div>
                 </div>
             </div>
-
-
-
-
-
         </div>
     </main>
 
@@ -614,6 +613,7 @@
             }
         }
 
+        /*
         function actualizarIconosSuelo() {
             const pathTitle = document.querySelector('#cave-path').previousElementSibling;
 
@@ -634,6 +634,24 @@
 
                 // Opcional: Podrías limpiar los badges individuales y dejar solo el contador 
                 // en el título para evitar confusiones de "en qué carta estaba el diamante".
+            }
+        }*/
+
+        function actualizarIconosSuelo() {
+            console.log('iconosSuelo')
+            const displaySuelo = document.getElementById('suelo-display');
+            if (displaySuelo) {
+                displaySuelo.innerHTML = `✳️ En el suelo: ${gemasEnSuelo}`;
+                if (gemasEnSuelo > 0) {
+                    displaySuelo.classList.add('animate-pulse', 'text-yellow-400');
+                } else {
+                    displaySuelo.classList.remove('animate-pulse', 'text-yellow-400');
+                }
+            }
+
+            if (gemasEnSuelo === 0) {
+                const badges = document.querySelectorAll('.gema-suelo-badge');
+                badges.forEach(badge => badge.remove());
             }
         }
 
@@ -673,7 +691,7 @@
 
             // 3. Reliquias
             reliquiasDisponibles.forEach(valor => {
-                nuevoMazo.push({ tipo: 'reliquia', valor: valor, nombre: `Reliquia de ${valor}` });
+                nuevoMazo.push({ tipo: 'reliquia', valor: valor, nombre: `Reliquia ${valor}` });
             });
 
             console.log(nuevoMazo)
@@ -694,7 +712,7 @@
 
             const cardEl = document.createElement('div');
             // Eliminado 'animate-bounce' para que las cartas estén estáticas
-            cardEl.className = "bg-gray-800 border-2 border-acento p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[120px]";
+            cardEl.className = "bg-gray-800 border-2 border-acento p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
 
 
 
@@ -717,10 +735,10 @@
             } else if (carta.tipo === 'reliquia') {
                 cardEl.classList.add('reliquia-activa', 'bg-amber-600', 'border-2', 'border-yellow-300');
                 cardEl.setAttribute('data-valor', carta.valor); // Guardamos el valor en el HTML
-                cardEl.className = "reliquia-activa bg-amber-600 border-2 border-yellow-300 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[120px]";
+                cardEl.className = "reliquia-activa bg-amber-600 border-2 border-yellow-300 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
                 cardEl.innerHTML = `<span class="text-3xl mb-1">🏺</span><span class="text-[10px] font-bold uppercase text-yellow-100 text-center">${carta.nombre}</span>`;
             } else {
-                cardEl.className = "bg-red-900 border-2 border-red-500 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[120px]";
+                cardEl.className = "bg-red-900 border-2 border-red-500 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
                 cardEl.innerHTML = `<span class="text-3xl mb-1">⚠️</span> <span class="text-[10px] font-bold uppercase text-red-100 text-center">${carta.nombre}</span>`;
 
                 if (peligrosRevelados.includes(carta.nombre)) {
@@ -761,19 +779,23 @@
             activos.forEach(p => {
                 decisionesTurno[p.id] = 'keep';
                 const btn = document.createElement('button');
-                btn.className = "px-4 py-2 rounded-lg border-2 border-gray-600 font-bold transition-all text-sm";
+                // Clases reducidas: p-1, text-xs, min-w-[100px]
+                btn.className = "px-3 py-1 rounded-md border-2 border-gray-600 font-bold transition-all text-xs min-w-[90px] h-10 flex flex-col items-center justify-center leading-tight";
                 btn.style.borderColor = p.color;
-                btn.innerHTML = `${p.nombre} <br><span class="text-[9px] opacity-70">SE QUEDA</span>`;
+                btn.innerHTML = `
+        <span class="truncate w-full">${p.nombre}</span>
+        <span class="text-[8px] opacity-70 uppercase">Se queda</span>
+    `;
 
                 btn.onclick = () => {
                     if (decisionesTurno[p.id] === 'keep') {
                         decisionesTurno[p.id] = 'leave';
-                        btn.classList.add('bg-red-600', 'text-white');
-                        btn.querySelector('span').innerText = 'SALE 🏃‍♂️';
+                        btn.classList.add('bg-red-600', 'text-white', 'border-red-400');
+                        btn.querySelector('span:last-child').innerText = 'SALE 🏃‍♂️';
                     } else {
                         decisionesTurno[p.id] = 'keep';
-                        btn.classList.remove('bg-red-600', 'text-white');
-                        btn.querySelector('span').innerText = 'SE QUEDA';
+                        btn.classList.remove('bg-red-600', 'text-white', 'border-red-400');
+                        btn.querySelector('span:last-child').innerText = 'SE QUEDA';
                     }
                 };
                 container.appendChild(btn);
@@ -794,11 +816,13 @@
             }
 
             rondaActual++;
+            window.iniciarExpedicion();
+            /*
             setTimeout(() => {
                 if (confirm(motivo + " ¿Empezar siguiente expedición?")) {
                     window.iniciarExpedicion();
                 }
-            }, 500);
+            }, 500);*/
         }
 
         window.mostrarPodioFinal = function () {
