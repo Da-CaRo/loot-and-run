@@ -280,7 +280,7 @@
                     <h3
                         class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest flex justify-between items-center">
                         <span>Camino de la Expedición</span>
-                        <span id="suelo-display" class="text-emerald-400 font-code normal-case">✳️ En el suelo: 0</span>
+                        <span id="suelo-display" class="text-emerald-400 font-code normal-case">💎 En el suelo: 0</span>
                     </h3>
                     <div id="cave-path"
                         class="flex flex-wrap gap-3 items-start content-start overflow-y-auto max-h-[350px] custom-scrollbar pt-4">
@@ -487,7 +487,7 @@
 
             // Mostrar el acumulado total del suelo en algún lugar de la cueva
             const pathTitle = document.querySelector('#cave-path').previousElementSibling;
-            pathTitle.innerHTML = `Camino de la Expedición <span class="ml-4 text-yellow-400">| Total en suelo: ✳️${gemasEnSuelo}</span>`;
+            pathTitle.innerHTML = `Camino de la Expedición <span class="ml-4 text-yellow-400">| Total en suelo: 💎${gemasEnSuelo}</span>`;
 
             // Aquí actualizaremos los cuadros de los jugadores (Status)
             const statusContainer = document.getElementById('players-status');
@@ -507,8 +507,8 @@
                 <span class="text-[10px] ml-1">${p.estado === 'explorando' ? '⛏️' : '🏠'}</span>
             </div>
             <div class="flex justify-between text-[11px]">
-                <span class="text-gray-400">Mano: <span class="text-white">✳️${p.gemasEnMano}</span></span>
-                <span class="font-bold text-emerald-400">Baúl: ✳️${p.baul}</span>
+                <span class="text-gray-400">Mano: <span class="text-white">💎${p.gemasEnMano}</span></span>
+                <span class="font-bold text-emerald-400">Baúl: 💎${p.baul}</span>
             </div>
         </div>
     </div>`;
@@ -662,7 +662,7 @@
             console.log('iconosSuelo')
             const displaySuelo = document.getElementById('suelo-display');
             if (displaySuelo) {
-                displaySuelo.innerHTML = `✳️ En el suelo: ${gemasEnSuelo}`;
+                displaySuelo.innerHTML = `💎 En el suelo: ${gemasEnSuelo}`;
                 if (gemasEnSuelo > 0) {
                     displaySuelo.classList.add('animate-pulse', 'text-yellow-400');
                 } else {
@@ -744,13 +744,13 @@
 
                 jugadores.forEach(p => p.gemasEnMano += porPersona);
 
-                cardEl.innerHTML = `<span class="text-3xl mb-1">✳️</span> <span class="font-black text-xl text-white">${carta.valor}</span>`;
+                cardEl.innerHTML = `<span class="text-3xl mb-1">💎</span> <span class="font-black text-xl text-white">${carta.valor}</span>`;
 
                 // Si hay sobrante en esta carta, añadimos un indicador visual
                 if (sobranteTurno > 0) {
                     const extraEl = document.createElement('div');
                     extraEl.className = "gema-suelo-badge absolute -top-2 -right-2 bg-yellow-500 text-gray-900 text-[10px] font-bold px-2 py-1 rounded-full border border-gray-900 shadow-md z-20";
-                    extraEl.innerHTML = `+${sobranteTurno} ✳️`;
+                    extraEl.innerHTML = `+${sobranteTurno} 💎`;
                     cardWrapper.appendChild(extraEl);
                 }
             } else if (carta.tipo === 'reliquia') {
@@ -891,7 +891,7 @@
                 </div>
             </div>
             <div class="text-right">
-                <span class="text-2xl font-black text-white">✳️ ${p.baul}</span>
+                <span class="text-2xl font-black text-white">💎 ${p.baul}</span>
             </div>
         `;
                 container.appendChild(item);
