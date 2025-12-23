@@ -156,6 +156,18 @@
                 </div>
             </div>
 
+            <button id="btn-revelar-carta" onclick="procesarTurno()" class="bg-gray-800 hover:bg-gray-700
+            text-white
+            px-8 py-2.5 
+            rounded-full font-black text-sm uppercase
+            transition-all duration-300
+            shadow-[0_0_20px_rgba(16,185,129,0.5)]
+            cursor-pointer
+            flex items-center justify-center">
+                Revelar Siguiente Carta 🃏
+            </button>
+
+
             <button id="reset-game-btn"
                 class="py-2 px-4 bg-gray-700 hover:bg-gray-600 text-red-400 font-bold rounded-lg transition duration-150 items-center justify-center text-base disabled:opacity-50 hidden"
                 title="Acabar Partida">
@@ -241,26 +253,20 @@
         </div>
     </div>
     <main class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        <div id="game-layout" class="flex flex-col lg:flex-row lg:space-x-8 hidden">
-            <div id="control-bar-wrapper"
-                class="flex flex-col sm:flex-row lg:flex-col justify-between items-center w-full lg:w-64 mb-6 lg:mb-0">
-
+        <div id="game-layout" class="flex flex-col lg:grid lg:grid-cols-[280px_1fr] lg:gap-8 hidden">
+            <div id="control-bar-wrapper" class="flex flex-col w-full shrink-0">
                 <div id="players-status"
-                    class="flex flex-col space-y-2 w-full lg:w-full mt-4 sm:mt-0 lg:mt-0 max-h-[60vh] lg:max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                    class="flex flex-col space-y-2 w-full max-h-[60vh] lg:max-h-[550px] overflow-y-auto pr-2 custom-scrollbar">
                 </div>
-
             </div>
 
-            <!--<div id="players-status" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            </div>-->
-            <div>
+            <div class="flex flex-col space-y-4">
                 <div class="bg-gray-900 p-6 rounded-xl border border-gray-700 min-h-[200px]">
                     <h3 class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">Camino de la Expedición
                     </h3>
                     <div id="cave-path" class="flex flex-wrap gap-4">
                     </div>
                 </div>
-
                 <div id="turn-actions" class="bg-gray-800 p-6 rounded-xl border-t-4 border-acento">
                     <div id="narrator-controls" class="text-center">
                         <h3 class="text-xl mb-4 font-bold text-acento">¿Quiénes se retiran?</h3>
@@ -268,14 +274,12 @@
                         <div id="decision-list" class="flex flex-wrap justify-center gap-3 mb-8">
                         </div>
 
-                        <button id="btn-revelar-carta" onclick="procesarTurno()"
-                            class="bg-acento text-gray-900 px-10 py-4 rounded-full font-black uppercase shadow-[0_0_20px_rgba(45,255,235,0.4)] hover:scale-105 transition-transform">
-                            Revelar Siguiente Carta 🃏
-                        </button>
+
                     </div>
                 </div>
-
             </div>
+
+
 
 
 
@@ -471,24 +475,23 @@
 
             listaJugadores.forEach(p => {
                 const card = document.createElement('div');
-                // Reducimos padding (p-2) y ajustamos bordes
-                card.className = `p-2 rounded-lg border text-sm ${p.estado === 'explorando' ? 'bg-gray-800/80 border-gray-700' : 'bg-black/40 border-red-900/50 opacity-60'} `;
+                // Añadimos 'w-full' para que ocupe el ancho de su columna fija y no más
+                card.className = `p-2 rounded-lg border text-sm w-full ${p.estado === 'explorando' ? 'bg-gray-800 border-gray-600' : 'bg-black/40 border-red-900/50 opacity-60'}`;
 
                 card.innerHTML = `
     <div class="flex items-center space-x-2">
-        <div class="w-2 h-6 rounded-full shrink-0" style="background-color: ${p.color}"></div>
+        <div class="w-2 h-8 rounded-full shrink-0" style="background-color: ${p.color}"></div>
         <div class="flex-1 min-w-0">
             <div class="flex justify-between items-center">
-                <span class="font-bold truncate pr-1" style="color: ${p.color}">${p.nombre}</span>
-                <span class="text-[9px] text-gray-500 uppercase shrink-0">${p.estado === 'explorando' ? '⛏️' : '🏠'}</span>
+                <span class="font-bold truncate" style="color: ${p.color}">${p.nombre}</span>
+                <span class="text-[10px] ml-1">${p.estado === 'explorando' ? '⛏️' : '🏠'}</span>
             </div>
-            <div class="flex justify-between text-[11px] leading-tight">
+            <div class="flex justify-between text-[11px]">
                 <span class="text-gray-400">Mano: <span class="text-white">✳️${p.gemasEnMano}</span></span>
                 <span class="font-bold text-emerald-400">Baúl: ✳️${p.baul}</span>
             </div>
         </div>
-    </div>
-    `;
+    </div>`;
                 statusContainer.appendChild(card);
             });
         }
