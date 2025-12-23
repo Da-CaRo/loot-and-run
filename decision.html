@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="img/favicon.png">
-    <title>Mando - Loot & Run</title>
+    <title>Loot & Run</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Ruslan+Display&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
             background-color: var(--color-fondo);
             color: var(--color-texto);
             font-family: ui-sans-serif, system-ui, sans-serif;
-            overflow: hidden; /* Evita scroll en el mando */
+            /*overflow: hidden;  Evita scroll en el mando */
         }
 
         .font-loot-and-run { font-family: 'Ruslan Display', cursive; }
@@ -46,7 +46,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 40vh;
+            height: 35vh;
             width: 100%;
             border-radius: 1.5rem;
             text-transform: uppercase;
@@ -91,7 +91,7 @@
         </div>
     </header>
 
-    <main class="flex-grow flex flex-col p-6 gap-6 justify-center">
+    <main class="flex-grow flex flex-col p-6 gap-6 ">
         
         <button onclick="confirmarAccion('SE QUEDA', 'keep')" class="btn-decision btn-keep">
             <span class="text-6xl mb-4 text-white">⛏️</span>
