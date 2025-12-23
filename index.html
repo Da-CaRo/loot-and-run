@@ -357,15 +357,28 @@
     <script type="module">
         document.getElementById('currentYearFooter').textContent = new Date().getFullYear();
 
-        // --- VARIABLES DE ESTADO DEL JUEGO ---
+        // --- 1. VARIABLES DE ESTADO (SIEMPRE PRIMERO) ---
         let listaJugadores = [];
         let jugadoresTemporales = [];
         let rondaActual = 1;
-        const MAX_RONDAS = 5; // Diamant son 5 expediciones
-
-        let mazo = [];
+        let mazoCueva = []; // <-- Asegúrate de que esté aquí
+        let cartasReveladas = [];
         let peligrosRevelados = [];
         let gemasEnSuelo = 0; // Gemas que sobran en el camino
+        const MAX_RONDAS = 5; // Diamant son 5 
+
+        // --- VARIABLES DE CARTAS Y MAZO ---
+        const CARTAS_TESORO = [1, 2, 3, 4, 5, 5, 7, 7, 9, 11, 13, 14, 15, 17, 17];
+        let inventarioPeligros = {
+            'Trampa': 3,
+            'Serpiente': 3,
+            'Lava': 3,
+            'Araña': 3,
+            'Rocas': 3
+        };
+        const CARTAS_RELIQUIAS = [5, 7, 8, 10, 12];
+        let reliquiasDisponibles = [...CARTAS_RELIQUIAS];
+
 
         const coloresJugadores = [
             { nombre: 'Rojo', hex: '#ef4444' },
@@ -468,6 +481,7 @@
 
         function iniciarExpedicion() {
             peligrosRevelados = [];
+            guardarEstadoPartida()
             gemasEnSuelo = 0;
             listaJugadores.forEach(p => {
                 p.gemasEnMano = 0;
@@ -532,25 +546,11 @@
 
         document.getElementById('reset-game-btn').onclick = () => {
             if (confirm("¿Deseas abandonar la expedición?")) {
+                localStorage.removeItem('loot_and_run_savegame');
                 location.reload();
             }
         };
 
-        cargarNombresRecientes();
-
-        // --- VARIABLES DE CARTAS Y MAZO ---
-        const CARTAS_TESORO = [1, 2, 3, 4, 5, 5, 7, 7, 9, 11, 13, 14, 15, 17, 17];
-        let inventarioPeligros = {
-            'Trampa': 3,
-            'Serpiente': 3,
-            'Lava': 3,
-            'Araña': 3,
-            'Rocas': 3
-        };
-        const CARTAS_RELIQUIAS = [5, 7, 8, 10, 12];
-        let reliquiasDisponibles = [...CARTAS_RELIQUIAS];
-        let mazoCueva = [];
-        let cartasReveladas = [];
 
         // --- FUNCIONES EXPUESTAS AL WINDOW (Para el HTML) ---
 
@@ -587,6 +587,7 @@
         window.procesarTurno = function () {
             // 1. Gestionar fugitivos
             const fugitivos = listaJugadores.filter(p => p.estado === 'explorando' && decisionesTurno[p.id] === 'leave');
+            guardarEstadoPartida()
 
             if (fugitivos.length > 0) {
                 // REGLA DE RELIQUIA: Solo si sale UNA persona
@@ -782,6 +783,8 @@
                 peligrosRevelados.push(carta.nombre);
             }
 
+            guardarEstadoPartida()
+
             cardWrapper.appendChild(cardEl);
             container.appendChild(cardWrapper);
             actualizarInterfaz();
@@ -836,6 +839,8 @@
                 return;
             }
 
+            guardarEstadoPartida()
+
             rondaActual++;
             window.iniciarExpedicion();
             /*
@@ -847,6 +852,7 @@
         }
 
         window.mostrarPodioFinal = function () {
+            localStorage.removeItem('loot_and_run_savegame')
             const modal = document.getElementById('end-game-modal');
             const container = document.getElementById('podium-list');
 
@@ -898,6 +904,77 @@
             });
         }
 
+        // --- NUEVAS FUNCIONES DE PERSISTENCIA ---
+
+        function guardarEstadoPartida() {
+            const estado = {
+                listaJugadores,
+                rondaActual,
+                mazoCueva,
+                cartasReveladas,
+                peligrosRevelados,
+                gemasEnSuelo,
+                inventarioPeligros,
+                reliquiasDisponibles,
+                enPartida: !document.getElementById('game-layout').classList.contains('hidden')
+            };
+            localStorage.setItem('loot_and_run_savegame', JSON.stringify(estado));
+        }
+
+        function cargarPartidaGuardada() {
+            const guardado = localStorage.getItem('loot_and_run_savegame');
+            if (!guardado) return;
+
+            const estado = JSON.parse(guardado);
+            if (!estado.enPartida) return;
+
+            // Restaurar variables
+            listaJugadores = estado.listaJugadores;
+            rondaActual = estado.rondaActual;
+            mazoCueva = estado.mazoCueva;
+            cartasReveladas = estado.cartasReveladas;
+            peligrosRevelados = estado.peligrosRevelados;
+            gemasEnSuelo = estado.gemasEnSuelo;
+            inventarioPeligros = estado.inventarioPeligros;
+            reliquiasDisponibles = estado.reliquiasDisponibles;
+
+            // Restaurar Interfaz
+            document.getElementById('start-buttons').classList.add('hidden');
+            document.getElementById('game-layout').classList.remove('hidden');
+            document.getElementById('reset-game-btn').classList.remove('hidden');
+
+            // Re-dibujar las cartas que estaban en mesa
+            const container = document.getElementById('cave-path');
+            container.innerHTML = '';
+
+            // IMPORTANTE: Recorremos las cartas reveladas para volver a pintarlas
+            cartasReveladas.forEach(carta => {
+                const cardWrapper = document.createElement('div');
+                cardWrapper.className = "relative flex flex-col items-center";
+                const cardEl = document.createElement('div');
+
+                if (carta.tipo === 'tesoro') {
+                    cardEl.className = "bg-gray-800 border-2 border-acento p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
+                    cardEl.innerHTML = `<span class="text-3xl mb-1">💎</span> <span class="font-black text-xl text-white">${carta.valor}</span>`;
+                    // Nota: El sobrante visual de gemas en el suelo se maneja por el total, 
+                    // no es necesario recrear los badges individuales exactos para la persistencia.
+                } else if (carta.tipo === 'reliquia') {
+                    cardEl.className = "reliquia-activa bg-amber-600 border-2 border-yellow-300 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
+                    cardEl.innerHTML = `<span class="text-3xl mb-1">🏺</span><span class="text-[10px] font-bold uppercase text-yellow-100 text-center">${carta.nombre}</span>`;
+                } else {
+                    cardEl.className = "bg-red-900 border-2 border-red-500 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
+                    cardEl.innerHTML = `<span class="text-3xl mb-1">⚠️</span> <span class="text-[10px] font-bold uppercase text-red-100 text-center">${carta.nombre}</span>`;
+                }
+                cardWrapper.appendChild(cardEl);
+                container.appendChild(cardWrapper);
+            });
+
+            actualizarInterfaz();
+            actualizarIconosSuelo();
+            prepararVotacion();
+        }
+
+
         // Actualizar el botón de inicio para llamar a la nueva función expuesta
         document.getElementById('start-btn').addEventListener('click', () => {
             listaJugadores = [...jugadoresTemporales];
@@ -906,6 +983,16 @@
             document.getElementById('reset-game-btn').classList.remove('hidden');
             window.iniciarExpedicion();
         });
+
+        // En el botón de borrar variables o reset:
+        document.getElementById('clear-storage-btn').onclick = () => {
+            localStorage.removeItem('loot_and_run_savegame');
+            location.reload();
+        };
+
+        // --- EJECUCIÓN INICIAL (AL FINAL DEL SCRIPT) ---
+        cargarNombresRecientes();
+        cargarPartidaGuardada(); // <-- Muévela aquí, al puro final.
 
     </script>
 
