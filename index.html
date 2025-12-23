@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <title>Loot & Run</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/qrious@4.0.2/dist/qrious.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ruslan+Display&display=swap" rel="stylesheet">
+    <script src="https://raw.githubusercontent.com/Da-CaRo/site-configs/main/control.js"
+        data-web="loot-and-run"></script>
+
+    <style>
+        /* 1. DEFINICIÓN DE VARIABLES DE COLOR */
+        :root {
+            --color-acento: #10b981;
+            /* Verde Esmeralda */
+            --color-fondo: #061612;
+            /* Un azul pizarra muy oscuro (slate-900) */
+            --color-tarjeta: #1e293b;
+            /* Un tono más claro para las tarjetas (slate-800) */
+            --color-texto: #f8fafc;
+            /* Blanco azulado muy limpio */
+            --color-texto-tarjeta: #94a3b8;
+            /* Gris suave para descripciones */
+            --color-borde-tarjeta: #334155;
+            /* Bordes sutiles */
+        }
+
+        /* 2. APLICACIÓN DE VARIABLES A LOS ESTILOS GLOBALMENTE */
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            background-color: var(--color-fondo);
+            /* Usando variable */
+            color: var(--color-texto);
+            /* Usando variable */
+        }
+
+        /* Para usar una fuente monoespaciada en títulos específicos */
+        .font-code {
+            font-family: 'Space Mono', ui-monospace, SFMono-Regular, monospace;
+        }
+
+        .font-loot-and-run {
+            font-family: 'Ruslan Display', cursive;
+        }
+
+        /* Sobrescribir las clases de Tailwind con las variables (para el color de acento) */
+        .text-loot-and-run {
+            /* Degradado de esmeralda con facetas */
+            background: linear-gradient(135deg,
+                    #a7f3d0 0%,
+                    /* Reflejo de luz en el borde */
+                    #10b981 25%,
+                    /* Verde esmeralda base */
+                    #065f46 50%,
+                    /* Sombra interna profunda */
+                    #10b981 75%,
+                    /* Reflejo secundario */
+                    #047857 100%);
+
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+
+            /* El truco: Múltiples sombras para dar volumen de piedra */
+            filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.2));
+            text-shadow:
+                0px 2px 4px rgba(0, 0, 0, 0.5),
+                0px 0px 20px rgba(16, 185, 129, 0.4);
+            background-size: 200% auto;
+            animation: shine 5s linear infinite;
+        }
+
+        .text-acento {
+            color: var(--color-acento);
+        }
+
+        .hover-acento:hover {
+            color: var(--color-acento);
+        }
+
+        .bg-tarjeta {
+            background-color: var(--color-tarjeta);
+        }
+
+        .border-tarjeta {
+            border-color: var(--color-borde-tarjeta);
+        }
+
+        .border-tarjeta:hover {
+            border-color: var(--color-acento);
+        }
+
+        .text-tarjeta {
+            color: var(--color-texto-tarjeta);
+        }
+
+
+        #players-list-display {
+            transition: all 0.3s ease;
+            min-height: 50px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        /* Estilo para el scrollbar de la lista de jugadores */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: var(--color-acento);
+            border-radius: 10px;
+        }
+
+        /* Estilo específico para el scroll del podio */
+        #podium-list {
+            scrollbar-width: thin;
+            scrollbar-color: var(--color-acento) transparent;
+        }
+
+        #podium-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #podium-list::-webkit-scrollbar-thumb {
+            background-color: var(--color-acento);
+            border-radius: 20px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen antialiased">
+    <header class="bg-gray-900 shadow-md p-4 border-b border-gray-800 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto flex justify-between items-center py-0">
+            <div class="flex items-center space-x-2">
+                <img src="img/favicon.png" alt="Icono Loot And Run" class="h-8 w-8">
+                <h1 class="text-3xl font-extrabold text-loot-and-run font-loot-and-run">
+                    Loot & Run
+                </h1>
+            </div>
+
+            <div id="nav-actions" class="flex items-center space-x-6">
+                <div id="action-buttons"></div>
+                <button id="btn-revelar-carta" onclick="procesarTurno()" class="hidden bg-gray-800 hover:bg-gray-700
+            text-white
+            px-8 py-2.5 
+            rounded-full font-black text-sm uppercase
+            transition-all duration-300
+            shadow-[0_0_20px_rgba(16,185,129,0.5)]
+            cursor-pointer
+            flex items-center justify-center">
+                    Siguiente Carta 🃏
+                </button>
+                <div id="game-progress"
+                    class="hidden flex items-center bg-gray-800 px-4 py-1.5 rounded-full border border-gray-700 shadow-inner">
+                    <span class="text-xs font-bold text-tarjeta mr-3 uppercase tracking-wider">Progreso</span>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex flex-col items-center">
+                            <span id="round-count" class="text-acento font-loot-and-run text-lg leading-none">1/5</span>
+                            <span class="text-[8px] text-gray-500 uppercase">Ronda</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div>
+                <button id="open-decision-btn"
+                    class="py-2 px-4 bg-gray-700 hover:bg-gray-600 text-blue-400 font-bold rounded-lg transition duration-150 items-center justify-center text-base disabled:opacity-50 hidden"
+                    title="Mostrar Enlace Decision">
+                    🫆 Decision
+                </button>
+
+
+                <button id="reset-game-btn"
+                    class="py-2 px-4 bg-gray-700 hover:bg-gray-600 text-red-400 font-bold rounded-lg transition duration-150 items-center justify-center text-base disabled:opacity-50 hidden"
+                    title="Acabar Partida">
+                    🛑 Salir
+                </button>
+            </div>
+        </div>
+    </header>
+    <div id="start-buttons">
+        <div class="py-8 md:py-12">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+
+                <h1 class="text-5xl md:text-6xl font-extrabold mb-4">
+                    <span class="font-loot-and-run text-loot-and-run">Escapa</span> antes de que sea demasiado tarde
+                </h1>
+                <p class="text-xl text-tarjeta mb-12 max-w-2xl mx-auto">
+                    Antiguas reliquias te esperan. El camino es peligroso y la
+                    suerte caprichosa. Solo el explorador más sabio sabe cuándo es momento de volver.
+                </p>
+            </div>
+
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                    <div
+                        class="bg-tarjeta p-6 rounded-lg shadow-xl border border-tarjeta transition duration-300 h-full flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="text-loot-and-run text-4xl block">⚙️</span>
+                                <h3 class="text-4xl font-bold">Opciones</h3>
+                            </div>
+                            <p class="text-tarjeta text-base">
+                            <div class="flex flex-col space-y-2 mb-4">
+                                <label
+                                    class="text-sm font-bold text-tarjeta uppercase tracking-widest text-center">Configurar
+                                    Jugadores</label>
+
+                                <div class="flex space-x-2">
+                                    <input type="text" id="player-name-input" placeholder="Introduce nombre (máx. 10)"
+                                        class="flex-1 p-3 bg-gray-700 border border-acento text-white rounded-lg focus:outline-none placeholder-gray-400"
+                                        maxlength="15"> <button id="add-player-btn"
+                                        class="shrink-0 bg-[--color-acento] text-white font-bold p-3 rounded-lg transition duration-150">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 4v16m8-8H4"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <button id="start-btn" disabled
+                                    class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition duration-150">
+                                    Empezar (mín. 3)
+                                </button>
+                            </div>
+                            </p>
+                        </div>
+                        <a href="https://da-caro.github.io/setup-and-play/loot-and-run.html" target="_blank" class="block">
+                            <span class="mt-5 inline-block text-sm font-medium text-loot-and-run hover:underline">Ver
+                                Instrucciones →</span></a>
+                    </div>
+
+                    <div
+                        class="bg-tarjeta p-6 rounded-lg shadow-xl border border-tarjeta transition duration-300 h-full flex flex-col justify-between lg:col-span-2">
+                        <div>
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="text-loot-and-run text-4xl block">⚙️</span>
+                                <h3 class="text-4xl font-bold">Jugadores</h3>
+                            </div>
+                            <p class="text-tarjeta text-base">
+                            <div class="flex flex-col space-y-2 mb-4">
+
+                                <div id="players-list-display"
+                                    class="flex flex-wrap gap-2 min-h-[40px] p-2 bg-gray-900/50 rounded-lg border border-dashed border-gray-700">
+                                </div>
+
+                            </div>
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <main class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div id="game-layout" class="hidden">
+            <div id="game-container"
+                class="flex flex-col lg:grid lg:grid-cols-[200px_1fr] lg:gap-8 hidden min-h-[70vh]">
+                <div id="control-bar-wrapper" class="flex flex-col w-full shrink-0">
+                    <div id="players-status"
+                        class="flex flex-col space-y-2 w-full max-h-[60vh] lg:max-h-[550px] overflow-y-auto pr-2 custom-scrollbar">
+                    </div>
+                </div>
+
+                <div class="flex flex-col space-y-4 h-full">
+                    <div class="bg-gray-900 p-6 rounded-xl border border-gray-700 min-h-[400px] flex-grow shadow-inner">
+                        <h3
+                            class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest flex justify-between items-center">
+                            <span>Camino de la Expedición</span>
+                            <span id="suelo-display" class="text-emerald-400 font-code normal-case">💎 En el suelo:
+                                0</span>
+                        </h3>
+                        <div id="cave-path"
+                            class="flex flex-wrap gap-3 items-start content-start overflow-y-auto max-h-[350px] custom-scrollbar pt-4">
+                        </div>
+                    </div>
+
+                    <div id="turn-actions" class="bg-gray-800 p-4 rounded-xl border-t-2 border-acento shadow-lg">
+                        <div id="narrator-controls" class="text-center">
+                            <p class="text-[10px] uppercase font-black text-gray-500 mb-2 tracking-tighter">Fase de
+                                Retirada
+                            </p>
+                            <div id="decision-list"
+                                class="flex flex-wrap justify-center gap-2 max-h-[120px] overflow-y-auto custom-scrollbar">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="end-game-modal"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+        <div
+            class="bg-gray-800 border-2 border-acento w-full max-w-2xl rounded-3xl p-8 text-center shadow-[0_0_50px_rgba(45,255,235,0.3)]">
+            <h2 class="family-bungee text-4xl text-acento mb-2 text-shadow-neon">¡FIN DE LA AVENTURA!</h2>
+            <p class="text-gray-400 mb-8 uppercase tracking-widest text-sm font-bold">Resultados de la expedición</p>
+
+            <div id="podium-list" class="space-y-4 mb-10 max-h-[50vh] overflow-y-auto pr-4 custom-scrollbar">
+            </div>
+
+            <button onclick="location.reload()" class="bg-gray-800 hover:bg-gray-700
+            text-white
+            px-8 py-2.5 
+            rounded-full font-black text-sm uppercase
+            transition-all duration-300
+            shadow-[0_0_20px_rgba(16,185,129,0.5)]
+            cursor-pointer
+            ">
+                Nueva Partida 🔄
+            </button>
+        </div>
+    </div>
+
+    <footer class="bg-gray-900 border-t border-gray-800 mt-16 py-4">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+
+                <p class="text-xs text-tarjeta mb-4 md:mb-0">
+                    &copy; <span id="currentYearFooter"></span> <span class="font-code">
+                        Da_CaRo
+                    </span>
+                </p>
+
+                <div class="flex space-x-6 items-center">
+                    <a href="https://da-caro.github.io/labs" target="_blank"
+                        class="text-tarjeta hover-acento transition duration-300 text-sm">
+                        Labs
+                    </a>
+                    <a href="https://github.com/da-caro" target="_blank"
+                        class="text-tarjeta hover-acento transition duration-300 text-sm">
+                        GitHub
+                    </a>
+                    <button id="clear-storage-btn" class="text-tarjeta hover-acento transition duration-300 text-sm">
+                        Borrar Variables
+                    </button>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="guide-modal" class="hidden fixed inset-0 bg-black/85 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 p-8 rounded-2xl max-w-sm w-full text-center border-2 border-acento shadow-2xl">
+        </div>
+    </div>
+
+    <div id="qr-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 p-4"
+        onclick="this.classList.add('hidden')">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-2xl max-w-sm w-full text-center"
+            onclick="event.stopPropagation()">
+            <h3 id="qr-instructions" class="text-2xl font-bold text-acento mb-4">Escanea la para mostrar las opciones
+            </h3>
+            <pre id="clave-code"
+                class="text-yellow-400 text-xl font-mono p-4 bg-gray-900 border border-gray-700 rounded-lg whitespace-pre text-center"></pre>
+            <canvas id="qr-canvas" class="w-full h-auto mx-auto border-4 border-gray-700 rounded-lg"></canvas>
+            <p class="text-sm text-gray-400 mt-4">Haz clic fuera para cerrar.</p>
+        </div>
+    </div>
+    <script type="module">
+        document.getElementById('currentYearFooter').textContent = new Date().getFullYear();
+
+        // --- 1. VARIABLES DE ESTADO (SIEMPRE PRIMERO) ---
+        let listaJugadores = [];
+        let jugadoresTemporales = [];
+        let rondaActual = 1;
+        let mazoCueva = []; // <-- Asegúrate de que esté aquí
+        let cartasReveladas = [];
+        let peligrosRevelados = [];
+        let gemasEnSuelo = 0; // Gemas que sobran en el camino
+        const MAX_RONDAS = 5; // Diamant son 5 
+
+        // --- VARIABLES DE CARTAS Y MAZO ---
+        const CARTAS_TESORO = [1, 2, 3, 4, 5, 5, 7, 7, 9, 11, 13, 14, 15, 17, 17];
+        let inventarioPeligros = {
+            'Trampa': 3,
+            'Serpiente': 3,
+            'Lava': 3,
+            'Araña': 3,
+            'Rocas': 3
+        };
+        const CARTAS_RELIQUIAS = [5, 7, 8, 10, 12];
+        let reliquiasDisponibles = [...CARTAS_RELIQUIAS];
+
+
+        const coloresJugadores = [
+            { nombre: 'Rojo', hex: '#ef4444' },
+            { nombre: 'Azul', hex: '#3b82f6' },
+            { nombre: 'Verde', hex: '#22c55e' },
+            { nombre: 'Amarillo', hex: '#eab308' },
+            { nombre: 'Rosa', hex: '#ec4899' },
+            { nombre: 'Naranja', hex: '#f97316' },
+            { nombre: 'Cian', hex: '#06b6d4' },
+            { nombre: 'Morado', hex: '#a855f7' },
+            { nombre: 'Lima', hex: '#84cc16' },
+            { nombre: 'Blanco', hex: '#f8fafc' }
+        ];
+
+        // --- GESTIÓN DE JUGADORES (SETUP) ---
+
+        document.getElementById('add-player-btn').onclick = () => {
+            const input = document.getElementById('player-name-input');
+            const nombre = input.value.trim();
+
+            if (nombre && jugadoresTemporales.length < 10) {
+                const colorAsignado = coloresJugadores[jugadoresTemporales.length % coloresJugadores.length].hex;
+                jugadoresTemporales.push({
+                    id: Date.now(),
+                    nombre: nombre,
+                    color: colorAsignado,
+                    gemasEnMano: 0, // Lo que lleva en la cueva actualmente
+                    baul: 0,        // Lo que ya ha asegurado
+                    estado: 'explorando' // 'explorando', 'a_salvo', 'fuera'
+                });
+                input.value = '';
+                actualizarVistaPreviaJugadores();
+                guardarNombresTemporales();
+            }
+        };
+
+        function actualizarVistaPreviaJugadores() {
+            const container = document.getElementById('players-list-display');
+            const startBtn = document.getElementById('start-btn');
+            container.innerHTML = '';
+
+            jugadoresTemporales.forEach((jugador, index) => {
+                const badge = document.createElement('div');
+                badge.draggable = true;
+                badge.className = 'flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-black transition-all duration-200 shadow-sm select-none';
+                badge.style.backgroundColor = jugador.color;
+                badge.style.color = '#0f172a';
+
+                badge.innerHTML = `
+            <span class="cursor-grab active:cursor-grabbing opacity-50 hover:opacity-100 px-1 text-lg drag-handle">⋮⋮</span>
+            <span class="flex-1 py-1 cursor-pointer hover:underline name-zone px-1" draggable="false">${jugador.nombre}</span>
+            <button class="opacity-40 hover:opacity-100 hover:text-white transition-opacity text-xl px-2 cursor-pointer delete-btn" 
+                    type="button" style="background:none; border:none; color:inherit; font-weight:bold;">×</button>
+        `;
+
+                // Cambiar color al hacer clic en el nombre
+                badge.querySelector('.name-zone').onclick = () => {
+                    let colorIndex = coloresJugadores.findIndex(c => c.hex === jugador.color);
+                    colorIndex = (colorIndex + 1) % coloresJugadores.length;
+                    jugador.color = coloresJugadores[colorIndex].hex;
+                    actualizarVistaPreviaJugadores();
+                    guardarNombresTemporales();
+                };
+
+                // Eliminar jugador
+                badge.querySelector('.delete-btn').onclick = () => {
+                    jugadoresTemporales.splice(index, 1);
+                    actualizarVistaPreviaJugadores();
+                    guardarNombresTemporales();
+                };
+
+                // Lógica de Drag & Drop (simplificada)
+                badge.ondragstart = (e) => { if (e.target.classList.contains('name-zone')) e.preventDefault(); e.dataTransfer.setData('text', index); };
+                badge.ondragover = (e) => e.preventDefault();
+                badge.ondrop = (e) => {
+                    const fromIndex = e.dataTransfer.getData('text');
+                    const item = jugadoresTemporales.splice(fromIndex, 1)[0];
+                    jugadoresTemporales.splice(index, 0, item);
+                    actualizarVistaPreviaJugadores();
+                    guardarNombresTemporales();
+                };
+
+                container.appendChild(badge);
+            });
+
+            startBtn.disabled = jugadoresTemporales.length < 3;
+            startBtn.textContent = jugadoresTemporales.length < 3 ? `Mínimo 3 jugadores` : `Empezar Partida`;
+        }
+
+        // --- LÓGICA DE CONTROL DE LA PARTIDA ---
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            listaJugadores = [...jugadoresTemporales];
+            document.getElementById('start-buttons').classList.add('hidden');
+            document.getElementById('game-layout').classList.remove('hidden');
+            document.getElementById('reset-game-btn').classList.remove('hidden');
+            document.getElementById('btn-revelar-carta').classList.remove('hidden');
+            document.getElementById('open-decision-btn').classList.remove('hidden');
+            document.querySelector('footer').classList.add('hidden')
+
+            iniciarExpedicion();
+        });
+
+        function iniciarExpedicion() {
+            peligrosRevelados = [];
+            guardarEstadoPartida()
+            gemasEnSuelo = 0;
+            listaJugadores.forEach(p => {
+                p.gemasEnMano = 0;
+                p.estado = 'explorando';
+            });
+
+            actualizarInterfaz();
+            console.log("Expedición " + rondaActual + " iniciada");
+        }
+
+        function actualizarInterfaz() {
+            const progressContainer = document.getElementById('game-progress');
+            const roundText = document.getElementById('round-count');
+
+            progressContainer.classList.remove('hidden');
+            roundText.textContent = `${rondaActual}/${MAX_RONDAS}`;
+
+            // Mostrar el acumulado total del suelo en algún lugar de la cueva
+            const pathTitle = document.querySelector('#cave-path').previousElementSibling;
+            pathTitle.innerHTML = `Camino de la Expedición <span class="ml-4 text-yellow-400">| Total en suelo: 💎${gemasEnSuelo}</span>`;
+
+            // Aquí actualizaremos los cuadros de los jugadores (Status)
+            const statusContainer = document.getElementById('players-status');
+            statusContainer.innerHTML = '';
+
+            listaJugadores.forEach(p => {
+                const card = document.createElement('div');
+                // Añadimos 'w-full' para que ocupe el ancho de su columna fija y no más
+                card.className = `p-2 rounded-lg border text-sm w-full ${p.estado === 'explorando' ? 'bg-gray-800 border-gray-600' : 'bg-black/40 border-red-900/50 opacity-60'}`;
+
+                card.innerHTML = `
+    <div class="flex items-center space-x-2">
+        <div class="w-2 h-8 rounded-full shrink-0" style="background-color: ${p.color}"></div>
+        <div class="flex-1 min-w-0">
+            <div class="flex justify-between items-center">
+                <span class="font-bold truncate" style="color: ${p.color}">${p.nombre}</span>
+                <span class="text-[10px] ml-1">${p.estado === 'explorando' ? '⛏️' : '🏠'}</span>
+            </div>
+            <div class="flex justify-between text-[11px]">
+                <span class="text-gray-400">Mano: <span class="text-white">💎${p.gemasEnMano}</span></span>
+                <span class="font-bold text-emerald-400">Baúl: 💎${p.baul}</span>
+            </div>
+        </div>
+    </div>`;
+                statusContainer.appendChild(card);
+            });
+        }
+
+        // --- PERSISTENCIA BÁSICA ---
+
+        function guardarNombresTemporales() {
+            localStorage.setItem('loot_and_run_nombres_recientes', JSON.stringify(jugadoresTemporales));
+        }
+
+        function cargarNombresRecientes() {
+            const guardados = localStorage.getItem('loot_and_run_nombres_recientes');
+            if (guardados) {
+                jugadoresTemporales = JSON.parse(guardados);
+                actualizarVistaPreviaJugadores();
+            }
+        }
+
+        document.getElementById('reset-game-btn').onclick = () => {
+            if (confirm("¿Deseas abandonar la expedición?")) {
+                localStorage.removeItem('loot_and_run_savegame');
+                location.reload();
+            }
+        };
+
+
+        // --- FUNCIONES EXPUESTAS AL WINDOW (Para el HTML) ---
+
+
+        function eliminarPeligroDelJuego(nombrePeligro) {
+            if (inventarioPeligros[nombrePeligro] > 0) {
+                inventarioPeligros[nombrePeligro]--;
+                console.log(`Se ha eliminado una carta de ${nombrePeligro}. Quedan: ${inventarioPeligros[nombrePeligro]}`);
+            }
+        }
+
+        window.iniciarExpedicion = function () {
+            if (rondaActual > MAX_RONDAS) {
+                mostrarPodioFinal(); // Función para el final del juego
+                return;
+            }
+
+            mazoCueva = generarMazo();
+            cartasReveladas = [];
+            peligrosRevelados = [];
+            gemasEnSuelo = 0;
+
+            listaJugadores.forEach(p => {
+                p.gemasEnMano = 0;
+                p.estado = 'explorando';
+            });
+
+            document.getElementById('cave-path').innerHTML = '';
+            actualizarInterfaz();
+            actualizarIconosSuelo();
+            prepararVotacion();
+        }
+
+        window.procesarTurno = function () {
+            // 1. Gestionar fugitivos
+            const fugitivos = listaJugadores.filter(p => p.estado === 'explorando' && decisionesTurno[p.id] === 'leave');
+            guardarEstadoPartida()
+
+            if (fugitivos.length > 0) {
+                // REGLA DE RELIQUIA: Solo si sale UNA persona
+                const reliquiasEnPantalla = document.querySelectorAll('.reliquia-activa');
+                if (fugitivos.length === 1 && reliquiasEnPantalla.length > 0) {
+                    let botinReliquias = 0;
+
+                    reliquiasEnPantalla.forEach(carta => {
+                        const valor = parseInt(carta.getAttribute('data-valor'));
+                        botinReliquias += valor;
+
+                        console.log(valor)
+
+                        // Quitamos la reliquia de las disponibles para próximas rondas
+                        reliquiasDisponibles = reliquiasDisponibles.filter(v => v !== valor);
+
+                        // Efecto visual de recogida
+                        carta.classList.replace('bg-amber-600', 'bg-gray-700');
+                        carta.classList.remove('reliquia-activa');
+                        carta.innerHTML = `<span class="text-3xl opacity-20">🏺</span><span class="text-[8px] uppercase">Recogida</span>`;
+                    });
+
+                    fugitivos[0].baul += botinReliquias;
+                    alert(`¡${fugitivos[0].nombre} se ha llevado ${reliquiasEnPantalla.length} reliquias! (+${botinReliquias}💎)`);
+                }
+
+                const porPersona = Math.floor(gemasEnSuelo / fugitivos.length);
+                gemasEnSuelo %= fugitivos.length;
+
+                fugitivos.forEach(p => {
+                    p.baul += (p.gemasEnMano + porPersona);
+                    p.gemasEnMano = 0;
+                    p.estado = 'a_salvo';
+                });
+
+                actualizarIconosSuelo();
+            }
+
+            // 2. Continuar con la revelación de carta...
+            const supervivientes = listaJugadores.filter(p => p.estado === 'explorando');
+            if (supervivientes.length > 0) {
+                sacarCartaCueva(supervivientes);
+            } else {
+                finalizarExpedicion("Todos han salido o han caído.");
+            }
+        }
+
+        /*
+        function actualizarIconosSuelo() {
+            const pathTitle = document.querySelector('#cave-path').previousElementSibling;
+
+            if (gemasEnSuelo === 0) {
+                // Si no queda nada, limpiamos todos los badges de las cartas
+                const badges = document.querySelectorAll('.gema-suelo-badge');
+                badges.forEach(badge => badge.remove());
+
+                if (pathTitle) {
+                    pathTitle.innerHTML = `Camino de la Expedición`;
+                }
+            } else {
+                // Si aún quedan diamantes (el sobrante del reparto), actualizamos el texto superior
+                // para que el narrador y los jugadores vean el total real disponible
+                if (pathTitle) {
+                    pathTitle.innerHTML = `Camino de la Expedición <span class="ml-4 text-yellow-400 animate-pulse">| Quedan en el suelo: 💎${gemasEnSuelo}</span>`;
+                }
+
+                // Opcional: Podrías limpiar los badges individuales y dejar solo el contador 
+                // en el título para evitar confusiones de "en qué carta estaba el diamante".
+            }
+        }*/
+
+        function actualizarIconosSuelo() {
+            const displaySuelo = document.getElementById('suelo-display');
+            if (displaySuelo) {
+                displaySuelo.innerHTML = `💎 En el suelo: ${gemasEnSuelo}`;
+                if (gemasEnSuelo > 0) {
+                    displaySuelo.classList.add('animate-pulse', 'text-yellow-400');
+                } else {
+                    displaySuelo.classList.remove('animate-pulse', 'text-yellow-400');
+                }
+            }
+
+            if (gemasEnSuelo === 0) {
+                const badges = document.querySelectorAll('.gema-suelo-badge');
+                badges.forEach(badge => badge.remove());
+            }
+        }
+
+        function repartirGemasSuelo(fugitivos) {
+            // Calculamos el reparto equitativo
+            const porPersona = Math.floor(gemasEnSuelo / fugitivos.length);
+
+            // IMPORTANTE: Actualizamos el residuo que se queda en el suelo
+            gemasEnSuelo = gemasEnSuelo % fugitivos.length;
+
+            fugitivos.forEach(p => {
+                p.baul += (p.gemasEnMano + porPersona);
+                p.gemasEnMano = 0;
+                p.estado = 'a_salvo';
+            });
+
+            actualizarInterfaz();
+            actualizarIconosSuelo(); // Llamamos a la actualización visual
+        }
+
+
+        // --- LÓGICA INTERNA ---
+
+        function generarMazo() {
+            let nuevoMazo = [];
+
+            // 1. Tesoros (15 cartas corregidas)
+            const CARTAS_TESORO_FULL = [1, 2, 3, 4, 5, 5, 7, 7, 9, 11, 13, 14, 15, 17, 17];
+            CARTAS_TESORO_FULL.forEach(v => nuevoMazo.push({ tipo: 'tesoro', valor: v }));
+
+            // 2. Peligros (basado en lo que queda en el inventario)
+            for (let tipo in inventarioPeligros) {
+                for (let i = 0; i < inventarioPeligros[tipo]; i++) {
+                    nuevoMazo.push({ tipo: 'peligro', nombre: tipo });
+                }
+            }
+
+            // 3. Reliquias
+            reliquiasDisponibles.forEach(valor => {
+                nuevoMazo.push({ tipo: 'reliquia', valor: valor, nombre: `Reliquia ${valor}` });
+            });
+
+            console.log(nuevoMazo)
+
+            // Mezclar el mazo aleatoriamente
+            return nuevoMazo.sort(() => Math.random() - 0.5);
+        }
+
+        function sacarCartaCueva(jugadores) {
+            const carta = mazoCueva.pop();
+            cartasReveladas.push(carta);
+
+            const container = document.getElementById('cave-path');
+
+            // Contenedor de la carta (Relativo para posicionar el sobrante encima)
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = "relative flex flex-col items-center";
+
+            const cardEl = document.createElement('div');
+            // Eliminado 'animate-bounce' para que las cartas estén estáticas
+            cardEl.className = "bg-gray-800 border-2 border-acento p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
+
+
+
+            if (carta.tipo === 'tesoro') {
+                const porPersona = Math.floor(carta.valor / jugadores.length);
+                const sobranteTurno = carta.valor % jugadores.length;
+                gemasEnSuelo += sobranteTurno;
+
+                jugadores.forEach(p => p.gemasEnMano += porPersona);
+
+                cardEl.innerHTML = `<span class="text-3xl mb-1">💎</span> <span class="font-black text-xl text-white">${carta.valor}</span>`;
+
+                // Si hay sobrante en esta carta, añadimos un indicador visual
+                if (sobranteTurno > 0) {
+                    const extraEl = document.createElement('div');
+                    extraEl.className = "gema-suelo-badge absolute -top-2 -right-2 bg-yellow-500 text-gray-900 text-[10px] font-bold px-2 py-1 rounded-full border border-gray-900 shadow-md z-20";
+                    extraEl.innerHTML = `+${sobranteTurno} 💎`;
+                    cardWrapper.appendChild(extraEl);
+                }
+            } else if (carta.tipo === 'reliquia') {
+                cardEl.classList.add('reliquia-activa', 'bg-amber-600', 'border-2', 'border-yellow-300');
+                cardEl.setAttribute('data-valor', carta.valor); // Guardamos el valor en el HTML
+                cardEl.className = "reliquia-activa bg-amber-600 border-2 border-yellow-300 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
+                cardEl.innerHTML = `<span class="text-3xl mb-1">🏺</span><span class="text-[10px] font-bold uppercase text-yellow-100 text-center">${carta.nombre}</span>`;
+            } else {
+                cardEl.className = "bg-red-900 border-2 border-red-500 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
+                cardEl.innerHTML = `<span class="text-3xl mb-1">⚠️</span> <span class="text-[10px] font-bold uppercase text-red-100 text-center">${carta.nombre}</span>`;
+
+                if (peligrosRevelados.includes(carta.nombre)) {
+                    // Mostramos la carta antes del alert
+                    cardWrapper.appendChild(cardEl);
+                    container.appendChild(cardWrapper);
+                    actualizarInterfaz();
+
+                    setTimeout(() => {
+                        alert(`¡SEGUNDO PELIGRO DE ${carta.nombre.toUpperCase()}! La expedición termina.`);
+                        jugadores.forEach(p => {
+                            p.gemasEnMano = 0;
+                            p.estado = 'fuera';
+                        });
+                        // Pasamos el nombre del peligro para que se elimine una carta
+                        finalizarExpedicion(`¡Peligro repetido: ${carta.nombre}!`, carta.nombre);
+                    }, 100);
+                    return;
+                }
+                peligrosRevelados.push(carta.nombre);
+            }
+
+            guardarEstadoPartida()
+
+            cardWrapper.appendChild(cardEl);
+            container.appendChild(cardWrapper);
+            actualizarInterfaz();
+            prepararVotacion();
+        }
+
+        let decisionesTurno = {};
+        function prepararVotacion() {
+            const container = document.getElementById('decision-list');
+            container.innerHTML = '';
+            decisionesTurno = {};
+
+            const activos = listaJugadores.filter(p => p.estado === 'explorando');
+            if (activos.length === 0) return;
+
+            activos.forEach(p => {
+                decisionesTurno[p.id] = 'keep';
+                const btn = document.createElement('button');
+                // Clases reducidas: p-1, text-xs, min-w-[100px]
+                btn.className = "px-3 py-1 rounded-md border-2 border-gray-600 font-bold transition-all text-xs min-w-[90px] h-10 flex flex-col items-center justify-center leading-tight";
+                btn.style.borderColor = p.color;
+                btn.innerHTML = `
+        <span class="truncate w-full">${p.nombre}</span>
+        <span class="text-[8px] opacity-70 uppercase">Se queda</span>
+    `;
+
+                btn.onclick = () => {
+                    if (decisionesTurno[p.id] === 'keep') {
+                        decisionesTurno[p.id] = 'leave';
+                        btn.classList.add('bg-red-600', 'text-white', 'border-red-400');
+                        btn.querySelector('span:last-child').innerText = 'SALE 🏃‍♂️';
+                    } else {
+                        decisionesTurno[p.id] = 'keep';
+                        btn.classList.remove('bg-red-600', 'text-white', 'border-red-400');
+                        btn.querySelector('span:last-child').innerText = 'SE QUEDA';
+                    }
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function finalizarExpedicion(motivo, peligroAEliminar = null) {
+            if (peligroAEliminar) {
+                eliminarPeligroDelJuego(peligroAEliminar);
+            }
+
+            // Si ya terminamos la ronda 5, no pedimos confirmación, vamos al podio
+            if (rondaActual >= MAX_RONDAS) {
+                setTimeout(() => {
+                    window.mostrarPodioFinal();
+                }, 1000);
+                return;
+            }
+
+            guardarEstadoPartida()
+
+            rondaActual++;
+            window.iniciarExpedicion();
+            /*
+            setTimeout(() => {
+                if (confirm(motivo + " ¿Empezar siguiente expedición?")) {
+                    window.iniciarExpedicion();
+                }
+            }, 500);*/
+        }
+
+        window.mostrarPodioFinal = function () {
+            localStorage.removeItem('loot_and_run_savegame')
+            const modal = document.getElementById('end-game-modal');
+            const container = document.getElementById('podium-list');
+
+            // 1. Ordenar jugadores de mayor a menor puntuación
+            const ranking = [...listaJugadores].sort((a, b) => b.baul - a.baul);
+
+            container.innerHTML = '';
+            modal.classList.remove('hidden');
+
+            let puestoVisual = 1;
+
+            ranking.forEach((p, index) => {
+                // 2. Lógica de empate: 
+                // Si no es el primero, y tiene los mismos puntos que el anterior, mantiene el puestoVisual.
+                // Si tiene menos puntos, el puestoVisual se iguala a su posición real en el array (index + 1).
+                if (index > 0 && p.baul < ranking[index - 1].baul) {
+                    puestoVisual = index + 1;
+                }
+
+                const item = document.createElement('div');
+                const esGanador = puestoVisual === 1; // Ahora todos los que compartan el puesto 1 brillan
+
+                item.className = `flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-500 ${esGanador
+                    ? 'bg-yellow-500/10 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.2)]'
+                    : 'bg-gray-700/50 border-gray-600'
+                    }`;
+
+                item.innerHTML = `
+            <div class="flex items-center space-x-4">
+                <div class="flex flex-col items-center justify-center min-w-[40px]">
+                    <span class="text-2xl font-black ${esGanador ? 'text-yellow-400' : 'text-gray-500'}">
+                        #${puestoVisual}
+                    </span>
+                    ${esGanador ? '<span class="text-[10px] text-yellow-500">🏆</span>' : ''}
+                </div>
+                <div class="w-3 h-10 rounded-full" style="background-color: ${p.color}"></div>
+                <div class="text-left">
+                    <p class="font-bold text-white uppercase text-lg leading-none">${p.nombre}</p>
+                    <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-tighter">
+                        ${esGanador ? 'Gran Explorador' : 'Superviviente'}
+                    </p>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="text-2xl font-black text-white">💎 ${p.baul}</span>
+            </div>
+        `;
+                container.appendChild(item);
+            });
+        }
+
+        // --- NUEVAS FUNCIONES DE PERSISTENCIA ---
+
+        function guardarEstadoPartida() {
+            const estado = {
+                listaJugadores,
+                rondaActual,
+                mazoCueva,
+                cartasReveladas,
+                peligrosRevelados,
+                gemasEnSuelo,
+                inventarioPeligros,
+                reliquiasDisponibles,
+                enPartida: !document.getElementById('game-layout').classList.contains('hidden')
+            };
+            localStorage.setItem('loot_and_run_savegame', JSON.stringify(estado));
+        }
+
+        function cargarPartidaGuardada() {
+            const guardado = localStorage.getItem('loot_and_run_savegame');
+            console.log(guardado)
+            if (!guardado) return;
+
+            const estado = JSON.parse(guardado);
+            if (!estado.enPartida) return;
+
+            // Restaurar variables
+            listaJugadores = estado.listaJugadores;
+            rondaActual = estado.rondaActual;
+            mazoCueva = estado.mazoCueva;
+            cartasReveladas = estado.cartasReveladas;
+            peligrosRevelados = estado.peligrosRevelados;
+            gemasEnSuelo = estado.gemasEnSuelo;
+            inventarioPeligros = estado.inventarioPeligros;
+            reliquiasDisponibles = estado.reliquiasDisponibles;
+
+            // Restaurar Interfaz
+            document.getElementById('start-buttons').classList.add('hidden');
+            document.getElementById('game-layout').classList.remove('hidden');
+            document.getElementById('reset-game-btn').classList.remove('hidden');
+            document.getElementById('btn-revelar-carta').classList.remove('hidden');
+            document.getElementById('open-decision-btn').classList.remove('hidden');
+            document.querySelector('footer').classList.add('hidden')
+
+            // Re-dibujar las cartas que estaban en mesa
+            const container = document.getElementById('cave-path');
+            container.innerHTML = '';
+
+            // IMPORTANTE: Recorremos las cartas reveladas para volver a pintarlas
+            cartasReveladas.forEach(carta => {
+                const cardWrapper = document.createElement('div');
+                cardWrapper.className = "relative flex flex-col items-center";
+                const cardEl = document.createElement('div');
+
+                if (carta.tipo === 'tesoro') {
+                    cardEl.className = "bg-gray-800 border-2 border-acento p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
+                    cardEl.innerHTML = `<span class="text-3xl mb-1">💎</span> <span class="font-black text-xl text-white">${carta.valor}</span>`;
+                    // Nota: El sobrante visual de gemas en el suelo se maneja por el total, 
+                    // no es necesario recrear los badges individuales exactos para la persistencia.
+                } else if (carta.tipo === 'reliquia') {
+                    cardEl.className = "reliquia-activa bg-amber-600 border-2 border-yellow-300 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
+                    cardEl.innerHTML = `<span class="text-3xl mb-1">🏺</span><span class="text-[10px] font-bold uppercase text-yellow-100 text-center">${carta.nombre}</span>`;
+                } else {
+                    cardEl.className = "bg-red-900 border-2 border-red-500 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
+                    cardEl.innerHTML = `<span class="text-3xl mb-1">⚠️</span> <span class="text-[10px] font-bold uppercase text-red-100 text-center">${carta.nombre}</span>`;
+                }
+                cardWrapper.appendChild(cardEl);
+                container.appendChild(cardWrapper);
+            });
+
+            actualizarInterfaz();
+            actualizarIconosSuelo();
+            prepararVotacion();
+        }
+
+        function generarEnlaceDecision() {
+            const urlBase = window.location.origin + window.location.pathname;
+            const urlToShare = `${urlBase}/decision.html`;
+
+            // Opción 1 (Predeterminada): Mostrar Código QR
+
+            const qrCanvas = document.getElementById('qr-canvas');
+            const qrModal = document.getElementById('qr-modal');
+
+            // 1. Generar el código QR
+            new QRious({
+                element: qrCanvas,
+                value: urlToShare,
+                size: 250 // Tamaño del QR
+            });
+
+            // 2. Mostrar el modal
+            document.getElementById('clave-code').classList.add('hidden'); // OCULTA el texto de la clave
+            document.getElementById('qr-canvas').classList.remove('hidden'); // MUESTRA el canvas del QR
+            document.getElementById('qr-instructions').classList.remove('hidden');
+
+            qrModal.classList.remove('hidden');
+
+        }
+
+
+        // Actualizar el botón de inicio para llamar a la nueva función expuesta
+        document.getElementById('start-btn').addEventListener('click', () => {
+            listaJugadores = [...jugadoresTemporales];
+            document.getElementById('start-buttons').classList.add('hidden');
+            document.getElementById('game-layout').classList.remove('hidden');
+            document.getElementById('reset-game-btn').classList.remove('hidden');
+            document.querySelector('footer').classList.add('hidden')
+            window.iniciarExpedicion();
+        });
+
+        // Abrir la pagina de botos:
+        document.getElementById('open-decision-btn').onclick = () => {
+            generarEnlaceDecision()
+        };
+
+        // En el botón de borrar variables o reset:
+        document.getElementById('clear-storage-btn').onclick = () => {
+            localStorage.removeItem('loot_and_run_savegame');
+            location.reload();
+        };
+
+        // --- EJECUCIÓN INICIAL (AL FINAL DEL SCRIPT) ---
+        cargarNombresRecientes();
+        cargarPartidaGuardada(); // <-- Muévela aquí, al puro final.
+
+    </script>
+
+</body>
+
+</html>
