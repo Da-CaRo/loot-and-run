@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="img/favicon.png">
     <title>Loot & Run</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/qrious@4.0.2/dist/qrious.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
@@ -182,6 +183,12 @@
                 Revelar Siguiente Carta 🃏
             </button>
 
+            <button id="open-decision-btn"
+                class="flex-1 py-3 px-2 bg-gray-700 hover:bg-gray-600 text-blue-400 font-bold rounded-full transition duration-150 flex items-center justify-center text-sm disabled:opacity-50 hidden"
+                title="Mostrar Enlace Decision">
+                🫆 Decision
+            </button>
+
 
             <button id="reset-game-btn"
                 class="py-2 px-4 bg-gray-700 hover:bg-gray-600 text-red-400 font-bold rounded-lg transition duration-150 items-center justify-center text-base disabled:opacity-50 hidden"
@@ -354,6 +361,19 @@
         <div class="bg-gray-800 p-8 rounded-2xl max-w-sm w-full text-center border-2 border-acento shadow-2xl">
         </div>
     </div>
+
+    <div id="qr-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 p-4"
+        onclick="this.classList.add('hidden')">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-2xl max-w-sm w-full text-center"
+            onclick="event.stopPropagation()">
+            <h3 id="qr-instructions" class="text-2xl font-bold text-acento mb-4">Escanea la para mostrar las opciones
+            </h3>
+            <pre id="clave-code"
+                class="text-yellow-400 text-xl font-mono p-4 bg-gray-900 border border-gray-700 rounded-lg whitespace-pre text-center"></pre>
+            <canvas id="qr-canvas" class="w-full h-auto mx-auto border-4 border-gray-700 rounded-lg"></canvas>
+            <p class="text-sm text-gray-400 mt-4">Haz clic fuera para cerrar.</p>
+        </div>
+    </div>
     <script type="module">
         document.getElementById('currentYearFooter').textContent = new Date().getFullYear();
 
@@ -475,6 +495,7 @@
             document.getElementById('start-buttons').classList.add('hidden');
             document.getElementById('game-layout').classList.remove('hidden');
             document.getElementById('reset-game-btn').classList.remove('hidden');
+            document.getElementById('open-decision-btn').classList.remove('hidden');
 
             iniciarExpedicion();
         });
@@ -974,6 +995,31 @@
             prepararVotacion();
         }
 
+        function generarEnlaceDecision() {
+            const urlBase = window.location.origin + window.location.pathname;
+            const urlToShare = `${urlBase}/decision.html`;
+
+            // Opción 1 (Predeterminada): Mostrar Código QR
+
+            const qrCanvas = document.getElementById('qr-canvas');
+            const qrModal = document.getElementById('qr-modal');
+
+            // 1. Generar el código QR
+            new QRious({
+                element: qrCanvas,
+                value: urlToShare,
+                size: 250 // Tamaño del QR
+            });
+
+            // 2. Mostrar el modal
+            document.getElementById('clave-code').classList.add('hidden'); // OCULTA el texto de la clave
+            document.getElementById('qr-canvas').classList.remove('hidden'); // MUESTRA el canvas del QR
+            document.getElementById('qr-instructions').classList.remove('hidden');
+
+            qrModal.classList.remove('hidden');
+
+        }
+
 
         // Actualizar el botón de inicio para llamar a la nueva función expuesta
         document.getElementById('start-btn').addEventListener('click', () => {
@@ -983,6 +1029,11 @@
             document.getElementById('reset-game-btn').classList.remove('hidden');
             window.iniciarExpedicion();
         });
+
+        // Abrir la pagina de botos:
+        document.getElementById('open-decision-btn').onclick = () => {
+            generarEnlaceDecision()
+        };
 
         // En el botón de borrar variables o reset:
         document.getElementById('clear-storage-btn').onclick = () => {
