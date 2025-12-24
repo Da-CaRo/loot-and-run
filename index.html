@@ -968,6 +968,7 @@
                     // no es necesario recrear los badges individuales exactos para la persistencia.
                 } else if (carta.tipo === 'reliquia') {
                     cardEl.className = "reliquia-activa bg-amber-600 border-2 border-yellow-300 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
+                    cardEl.setAttribute('data-valor', carta.valor);
                     cardEl.innerHTML = `<span class="text-3xl mb-1">🏺</span><span class="text-[10px] font-bold uppercase text-yellow-100 text-center">${carta.nombre}</span>`;
                 } else {
                     cardEl.className = "bg-red-900 border-2 border-red-500 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
