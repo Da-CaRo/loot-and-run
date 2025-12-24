@@ -145,6 +145,14 @@
             background-color: var(--color-acento);
             border-radius: 20px;
         }
+
+        .bg-trampa {
+            background: linear-gradient(145deg, #7f1d1d, #450a0a);
+        }
+
+        .bg-reliqua {
+            background: linear-gradient(145deg, #b45309, #78350f);
+        }
     </style>
 </head>
 
@@ -402,6 +410,13 @@
             'Lava': 3,
             'Araña': 3,
             'Rocas': 3
+        };
+        const iconosPeligro = {
+            'Trampa': '🕳️',
+            'Serpiente': '🐍',
+            'Lava': '🌋',
+            'Araña': '🕷️',
+            'Rocas': '🪨'
         };
         const CARTAS_RELIQUIAS = [5, 7, 8, 10, 12];
         let reliquiasDisponibles = [...CARTAS_RELIQUIAS];
@@ -764,8 +779,9 @@
                 cardEl.className = "reliquia-activa bg-amber-600 border-2 border-yellow-300 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
                 cardEl.innerHTML = `<span class="text-3xl mb-1">🏺</span><span class="text-[10px] font-bold uppercase text-yellow-100 text-center">${carta.nombre}</span>`;
             } else {
+                const icono = iconosPeligro[carta.nombre] || '⚠️'; // Icono por defecto si no encuentra el nombre
                 cardEl.className = "bg-red-900 border-2 border-red-500 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
-                cardEl.innerHTML = `<span class="text-3xl mb-1">⚠️</span> <span class="text-[10px] font-bold uppercase text-red-100 text-center">${carta.nombre}</span>`;
+                cardEl.innerHTML = `<span class="text-3xl mb-1">${icono}</span> <span class="text-[10px] font-bold uppercase text-red-100 text-center">${carta.nombre}</span>`;
 
                 if (peligrosRevelados.includes(carta.nombre)) {
                     // Mostramos la carta antes del alert
@@ -971,8 +987,9 @@
                     cardEl.setAttribute('data-valor', carta.valor);
                     cardEl.innerHTML = `<span class="text-3xl mb-1">🏺</span><span class="text-[10px] font-bold uppercase text-yellow-100 text-center">${carta.nombre}</span>`;
                 } else {
+                    const icono = iconosPeligro[carta.nombre] || '⚠️'; // Icono por defecto si no encuentra el nombre
                     cardEl.className = "bg-red-900 border-2 border-red-500 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
-                    cardEl.innerHTML = `<span class="text-3xl mb-1">⚠️</span> <span class="text-[10px] font-bold uppercase text-red-100 text-center">${carta.nombre}</span>`;
+                    cardEl.innerHTML = `<span class="text-3xl mb-1">${icono}</span> <span class="text-[10px] font-bold uppercase text-red-100 text-center">${carta.nombre}</span>`;
                 }
                 cardWrapper.appendChild(cardEl);
                 container.appendChild(cardWrapper);
