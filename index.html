@@ -145,6 +145,14 @@
             background-color: var(--color-acento);
             border-radius: 20px;
         }
+
+        .bg-trampa {
+            background: linear-gradient(145deg, #7f1d1d, #450a0a);
+        }
+
+        .bg-reliqua {
+            background: linear-gradient(145deg, #b45309, #78350f);
+        }
     </style>
 </head>
 
@@ -248,7 +256,8 @@
                             </div>
                             </p>
                         </div>
-                        <a href="https://da-caro.github.io/setup-and-play/loot-and-run.html" target="_blank" class="block">
+                        <a href="https://da-caro.github.io/setup-and-play/loot-and-run.html" target="_blank"
+                            class="block">
                             <span class="mt-5 inline-block text-sm font-medium text-loot-and-run hover:underline">Ver
                                 Instrucciones →</span></a>
                     </div>
@@ -277,36 +286,35 @@
         </div>
     </div>
     <main class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        <div id="game-layout" class="hidden">
-            <div id="game-container"
-                class="flex flex-col lg:grid lg:grid-cols-[200px_1fr] lg:gap-8 hidden min-h-[70vh]">
-                <div id="control-bar-wrapper" class="flex flex-col w-full shrink-0">
-                    <div id="players-status"
-                        class="flex flex-col space-y-2 w-full max-h-[60vh] lg:max-h-[550px] overflow-y-auto pr-2 custom-scrollbar">
+        <div id="game-layout" class="flex flex-col lg:flex-row lg:space-x-8 hidden">
+
+            <div id="control-bar-wrapper"
+                class="flex flex-col sm:flex-row lg:flex-col justify-between items-center w-full lg:w-64 mb-6 lg:mb-0">
+                <div id="players-status"
+                    class="flex flex-row lg:flex-col gap-2 w-full overflow-x-auto lg:overflow-y-auto lg:max-h-[550px] pb-2 lg:pr-2 custom-scrollbar">
+                </div>
+            </div>
+
+            <div class="flex flex-col space-y-4 h-full w-full">
+                <div class="bg-gray-900 p-6 rounded-xl border border-gray-700 min-h-[400px] flex-grow shadow-inner">
+                    <h3
+                        class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest flex justify-between items-center">
+                        <span>Camino de la Expedición</span>
+                        <span id="suelo-display" class="text-emerald-400 font-code normal-case">💎 En el suelo:
+                            0</span>
+                    </h3>
+                    <div id="cave-path"
+                        class="flex flex-wrap gap-3 items-start content-start overflow-y-auto max-h-[350px] custom-scrollbar pt-4">
                     </div>
                 </div>
 
-                <div class="flex flex-col space-y-4 h-full">
-                    <div class="bg-gray-900 p-6 rounded-xl border border-gray-700 min-h-[400px] flex-grow shadow-inner">
-                        <h3
-                            class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest flex justify-between items-center">
-                            <span>Camino de la Expedición</span>
-                            <span id="suelo-display" class="text-emerald-400 font-code normal-case">💎 En el suelo:
-                                0</span>
-                        </h3>
-                        <div id="cave-path"
-                            class="flex flex-wrap gap-3 items-start content-start overflow-y-auto max-h-[350px] custom-scrollbar pt-4">
-                        </div>
-                    </div>
-
-                    <div id="turn-actions" class="bg-gray-800 p-4 rounded-xl border-t-2 border-acento shadow-lg">
-                        <div id="narrator-controls" class="text-center">
-                            <p class="text-[10px] uppercase font-black text-gray-500 mb-2 tracking-tighter">Fase de
-                                Retirada
-                            </p>
-                            <div id="decision-list"
-                                class="flex flex-wrap justify-center gap-2 max-h-[120px] overflow-y-auto custom-scrollbar">
-                            </div>
+                <div id="turn-actions" class="bg-gray-800 p-4 rounded-xl border-t-2 border-acento shadow-lg">
+                    <div id="narrator-controls" class="text-center">
+                        <p class="text-[10px] uppercase font-black text-gray-500 mb-2 tracking-tighter">Fase de
+                            Retirada
+                        </p>
+                        <div id="decision-list"
+                            class="flex flex-wrap justify-center gap-2 max-h-[120px] overflow-y-auto custom-scrollbar">
                         </div>
                     </div>
                 </div>
@@ -403,6 +411,13 @@
             'Araña': 3,
             'Rocas': 3
         };
+        const iconosPeligro = {
+            'Trampa': '🕳️',
+            'Serpiente': '🐍',
+            'Lava': '🌋',
+            'Araña': '🕷️',
+            'Rocas': '🪨'
+        };
         const CARTAS_RELIQUIAS = [5, 7, 8, 10, 12];
         let reliquiasDisponibles = [...CARTAS_RELIQUIAS];
 
@@ -497,31 +512,6 @@
 
         // --- LÓGICA DE CONTROL DE LA PARTIDA ---
 
-        document.getElementById('start-btn').addEventListener('click', () => {
-            listaJugadores = [...jugadoresTemporales];
-            document.getElementById('start-buttons').classList.add('hidden');
-            document.getElementById('game-layout').classList.remove('hidden');
-            document.getElementById('reset-game-btn').classList.remove('hidden');
-            document.getElementById('btn-revelar-carta').classList.remove('hidden');
-            document.getElementById('open-decision-btn').classList.remove('hidden');
-            document.querySelector('footer').classList.add('hidden')
-
-            iniciarExpedicion();
-        });
-
-        function iniciarExpedicion() {
-            peligrosRevelados = [];
-            guardarEstadoPartida()
-            gemasEnSuelo = 0;
-            listaJugadores.forEach(p => {
-                p.gemasEnMano = 0;
-                p.estado = 'explorando';
-            });
-
-            actualizarInterfaz();
-            console.log("Expedición " + rondaActual + " iniciada");
-        }
-
         function actualizarInterfaz() {
             const progressContainer = document.getElementById('game-progress');
             const roundText = document.getElementById('round-count');
@@ -540,7 +530,7 @@
             listaJugadores.forEach(p => {
                 const card = document.createElement('div');
                 // Añadimos 'w-full' para que ocupe el ancho de su columna fija y no más
-                card.className = `p-2 rounded-lg border text-sm w-full ${p.estado === 'explorando' ? 'bg-gray-800 border-gray-600' : 'bg-black/40 border-red-900/50 opacity-60'}`;
+                card.className = `p-2 rounded-lg border text-sm min-w-[140px] lg:min-w-full shrink-0 ${p.estado === 'explorando' ? 'bg-gray-800 border-gray-600' : 'bg-black/40 border-red-900/50 opacity-60'}`;
 
                 card.innerHTML = `
     <div class="flex items-center space-x-2">
@@ -789,8 +779,9 @@
                 cardEl.className = "reliquia-activa bg-amber-600 border-2 border-yellow-300 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
                 cardEl.innerHTML = `<span class="text-3xl mb-1">🏺</span><span class="text-[10px] font-bold uppercase text-yellow-100 text-center">${carta.nombre}</span>`;
             } else {
+                const icono = iconosPeligro[carta.nombre] || '⚠️'; // Icono por defecto si no encuentra el nombre
                 cardEl.className = "bg-red-900 border-2 border-red-500 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
-                cardEl.innerHTML = `<span class="text-3xl mb-1">⚠️</span> <span class="text-[10px] font-bold uppercase text-red-100 text-center">${carta.nombre}</span>`;
+                cardEl.innerHTML = `<span class="text-3xl mb-1">${icono}</span> <span class="text-[10px] font-bold uppercase text-red-100 text-center">${carta.nombre}</span>`;
 
                 if (peligrosRevelados.includes(carta.nombre)) {
                     // Mostramos la carta antes del alert
@@ -993,10 +984,12 @@
                     // no es necesario recrear los badges individuales exactos para la persistencia.
                 } else if (carta.tipo === 'reliquia') {
                     cardEl.className = "reliquia-activa bg-amber-600 border-2 border-yellow-300 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
+                    cardEl.setAttribute('data-valor', carta.valor);
                     cardEl.innerHTML = `<span class="text-3xl mb-1">🏺</span><span class="text-[10px] font-bold uppercase text-yellow-100 text-center">${carta.nombre}</span>`;
                 } else {
+                    const icono = iconosPeligro[carta.nombre] || '⚠️'; // Icono por defecto si no encuentra el nombre
                     cardEl.className = "bg-red-900 border-2 border-red-500 p-4 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] h-[100px]";
-                    cardEl.innerHTML = `<span class="text-3xl mb-1">⚠️</span> <span class="text-[10px] font-bold uppercase text-red-100 text-center">${carta.nombre}</span>`;
+                    cardEl.innerHTML = `<span class="text-3xl mb-1">${icono}</span> <span class="text-[10px] font-bold uppercase text-red-100 text-center">${carta.nombre}</span>`;
                 }
                 cardWrapper.appendChild(cardEl);
                 container.appendChild(cardWrapper);
@@ -1033,13 +1026,39 @@
         }
 
 
-        // Actualizar el botón de inicio para llamar a la nueva función expuesta
+        /*
+        function iniciarExpedicion() {
+            peligrosRevelados = [];
+            guardarEstadoPartida()
+            gemasEnSuelo = 0;
+            listaJugadores.forEach(p => {
+                p.gemasEnMano = 0;
+                p.estado = 'explorando';
+            });
+
+            actualizarInterfaz();
+            console.log("Expedición " + rondaActual + " iniciada");
+        }
+        
         document.getElementById('start-btn').addEventListener('click', () => {
             listaJugadores = [...jugadoresTemporales];
             document.getElementById('start-buttons').classList.add('hidden');
             document.getElementById('game-layout').classList.remove('hidden');
             document.getElementById('reset-game-btn').classList.remove('hidden');
             document.querySelector('footer').classList.add('hidden')
+            window.iniciarExpedicion();
+        });*/
+
+        // Actualizar el botón de inicio para llamar a la nueva función expuesta
+        document.getElementById('start-btn').addEventListener('click', () => {
+            listaJugadores = [...jugadoresTemporales];
+            document.getElementById('start-buttons').classList.add('hidden');
+            document.getElementById('game-layout').classList.remove('hidden');
+            document.getElementById('reset-game-btn').classList.remove('hidden');
+            document.getElementById('btn-revelar-carta').classList.remove('hidden');
+            document.getElementById('open-decision-btn').classList.remove('hidden');
+            document.querySelector('footer').classList.add('hidden')
+
             window.iniciarExpedicion();
         });
 
